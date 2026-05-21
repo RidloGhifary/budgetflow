@@ -1,0 +1,226 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WalletType {
+  CASH
+  BANK
+  EWALLET
+  CREDIT_CARD
+  OTHER
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionPurpose {
+  NORMAL
+  DEBT_PAYMENT
+  DEBT_COLLECTION
+  SAVING_CONTRIBUTION
+}
+
+enum DebtType {
+  I_OWE
+  OWED_TO_ME
+}
+
+enum DebtStatus {
+  UNPAID
+  PARTIAL
+  PAID
+}
+
+enum SavingGoalStatus {
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  wallets      Wallet[]
+  categories   Category[]
+  transactions Transaction[]
+  budgets      Budget[]
+  debts        Debt[]
+  debtPayments DebtPayment[]
+  savingGoals  SavingGoal[]
+  savingContributions SavingContribution[]
+
+  @@map("users")
+}
+
+model Wallet {
+  id             String        @id @default(uuid())
+  userId         String
+  name           String
+  type           WalletType
+  initialBalance Decimal    @default(0) @db.Decimal(14, 2)
+  currentBalance Decimal    @default(0) @db.Decimal(14, 2)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions   Transaction[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("wallets")
+}
+
+model Category {
+  id           String        @id @default(uuid())
+  userId       String
+  name         String
+  type         CategoryType
+  icon         String?
+  color        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@unique([userId, type, name])
+  @@index([userId])
+  @@map("categories")
+}
+
+model Transaction {
+  id              String             @id @default(uuid())
+  userId          String
+  walletId        String
+  categoryId      String
+  type            TransactionType
+  purpose         TransactionPurpose @default(NORMAL)
+  amount          Decimal            @db.Decimal(14, 2)
+  transactionDate DateTime
+  note            String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet          Wallet             @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  category        Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  debtPayment     DebtPayment?
+  savingContribution SavingContribution?
+
+  @@index([userId, transactionDate])
+  @@index([walletId])
+  @@index([categoryId])
+  @@map("transactions")
+}
+
+model Budget {
+  id          String   @id @default(uuid())
+  userId      String
+  categoryId  String
+  month       Int
+  year        Int
+  limitAmount Decimal  @db.Decimal(14, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, categoryId, month, year])
+  @@index([userId, month, year])
+  @@index([categoryId])
+  @@map("budgets")
+}
+
+model Debt {
+  id              String        @id @default(uuid())
+  userId          String
+  type            DebtType
+  title           String
+  personName      String
+  totalAmount     Decimal       @db.Decimal(14, 2)
+  paidAmount      Decimal       @default(0) @db.Decimal(14, 2)
+  remainingAmount Decimal       @db.Decimal(14, 2)
+  dueDate         DateTime?
+  status          DebtStatus    @default(UNPAID)
+  note            String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments        DebtPayment[]
+
+  @@index([userId, type])
+  @@index([userId, status])
+  @@index([userId, dueDate])
+  @@map("debts")
+}
+
+model DebtPayment {
+  id            String      @id @default(uuid())
+  userId        String
+  debtId        String
+  transactionId String      @unique
+  amount        Decimal     @db.Decimal(14, 2)
+  paymentDate   DateTime
+  note          String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  debt          Debt        @relation(fields: [debtId], references: [id], onDelete: Restrict)
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+
+  @@index([userId, paymentDate])
+  @@index([debtId])
+  @@map("debt_payments")
+}
+
+model SavingGoal {
+  id            String               @id @default(uuid())
+  userId        String
+  name          String
+  targetAmount  Decimal              @db.Decimal(14, 2)
+  currentAmount Decimal              @default(0) @db.Decimal(14, 2)
+  deadline      DateTime?
+  status        SavingGoalStatus     @default(IN_PROGRESS)
+  note          String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contributions SavingContribution[]
+
+  @@index([userId, status])
+  @@index([userId, deadline])
+  @@map("saving_goals")
+}
+
+model SavingContribution {
+  id               String      @id @default(uuid())
+  userId           String
+  savingGoalId     String
+  transactionId    String      @unique
+  amount           Decimal     @db.Decimal(14, 2)
+  contributionDate DateTime
+  note             String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  savingGoal       SavingGoal  @relation(fields: [savingGoalId], references: [id], onDelete: Restrict)
+  transaction      Transaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+
+  @@index([userId, contributionDate])
+  @@index([savingGoalId])
+  @@map("saving_contributions")
+}
