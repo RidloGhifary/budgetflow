@@ -56,6 +56,7 @@ pnpm prisma:generate
 pnpm migration:run
 pnpm migration:deploy
 pnpm db:studio
+pnpm update:disposable-email-blocklist
 ```
 
 Use `pnpm prisma:generate`, `pnpm lint`, and `pnpm build` before shipping changes.
@@ -79,7 +80,15 @@ The server service runs on `http://localhost:4000`, uses PostgreSQL at the Docke
 
 ## Auth Security
 
-Registration and login normalize emails by trimming whitespace and lowercasing before validation, lookup, and storage. Registration blocks common disposable email domains and can merge additional blocked domains from:
+Registration and login normalize emails by trimming whitespace and lowercasing before validation, lookup, and storage. Registration blocks disposable email domains using a vendored local copy of the `disposable-email-domains/disposable-email-domains` blocklist at `src/modules/auth/data/disposable_email_blocklist.conf`.
+
+The blocklist is loaded locally and is not fetched from GitHub during registration. To refresh it manually, run:
+
+```bash
+pnpm update:disposable-email-blocklist
+```
+
+Registration can also merge additional blocked domains from:
 
 ```env
 BLOCKED_EMAIL_DOMAINS=example.com,test.com

@@ -1,12 +1,12 @@
 import { env } from "../../config/env";
-import { disposableEmailDomains } from "./disposable-email-domains";
+import { isDisposableEmailDomain, normalizeDomain } from "./disposable-email.service";
 
 const configuredBlockedDomains = env.auth.blockedEmailDomains
   .split(",")
   .map((domain) => normalizeDomain(domain))
   .filter(Boolean);
 
-const blockedDomains = new Set([...disposableEmailDomains, ...configuredBlockedDomains]);
+const configuredBlockedDomainSet = new Set(configuredBlockedDomains);
 
 export function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
@@ -26,13 +26,19 @@ export function isBlockedEmailDomain(email: string) {
     return false;
   }
 
-  if (blockedDomains.has(domain)) {
-    return true;
-  }
-
-  return Array.from(blockedDomains).some((blockedDomain) => domain.endsWith(`.${blockedDomain}`));
+  return isDisposableEmailDomain(domain) || isConfiguredBlockedDomain(domain);
 }
 
-function normalizeDomain(domain: string) {
-  return domain.trim().toLowerCase().replace(/^\.+|\.+$/g, "");
+function isConfiguredBlockedDomain(domain: string) {
+  const domainParts = domain.split(".");
+
+  for (let index = 0; index <= domainParts.length - 2; index += 1) {
+    const candidate = domainParts.slice(index).join(".");
+
+    if (configuredBlockedDomainSet.has(candidate)) {
+      return true;
+    }
+  }
+
+  return false;
 }

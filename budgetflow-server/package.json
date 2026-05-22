@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "migration:run": "prisma migrate dev",
     "migration:deploy": "prisma migrate deploy",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "update:disposable-email-blocklist": "tsx scripts/update-disposable-email-blocklist.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
