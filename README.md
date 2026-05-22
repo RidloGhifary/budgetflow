@@ -71,6 +71,25 @@ docker compose exec server pnpm migration:run
 
 Default database values come from `.env.example`. If you change `POSTGRES_USER`, `POSTGRES_PASSWORD`, or `POSTGRES_DB`, keep `DATABASE_URL` in sync.
 
+## AI Dashboard Chat
+
+Local Docker uses the mock AI provider by default:
+
+```env
+AI_PROVIDER=mock
+```
+
+To use a real OpenAI-compatible free or free-tier provider, set these server-side values in `.env`:
+
+```env
+AI_PROVIDER=http
+AI_BASE_URL=https://your-provider.example/v1
+AI_API_KEY=replace-with-real-key
+AI_MODEL=your-model
+```
+
+The client still calls only `http://localhost:4000/api`; AI keys stay on the server.
+
 ## Clean Database
 
 PostgreSQL data persists in the named volume `budgetflow_postgres_data`.

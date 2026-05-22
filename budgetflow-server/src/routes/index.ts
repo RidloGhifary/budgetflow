@@ -1,5 +1,6 @@
 import { Router } from "express";
 
+import { aiRouter } from "../modules/ai/ai.routes";
 import { authRouter } from "../modules/auth/auth.routes";
 import { budgetRouter } from "../modules/budgets/budget.routes";
 import { categoryRouter } from "../modules/categories/category.routes";
@@ -13,6 +14,7 @@ import { walletRouter } from "../modules/wallets/wallet.routes";
 export const apiRouter = Router();
 
 apiRouter.use("/auth", authRouter);
+apiRouter.use("/ai", aiRouter);
 apiRouter.use("/wallets", walletRouter);
 apiRouter.use("/categories", categoryRouter);
 apiRouter.use("/transactions", transactionRouter);

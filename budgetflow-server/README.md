@@ -30,6 +30,14 @@ JWT_SECRET=replace-with-a-long-random-secret
 JWT_EXPIRES_IN=7d
 CLIENT_URL=http://localhost:3000
 NODE_ENV=development
+AI_PROVIDER=mock
+AI_BASE_URL=
+AI_API_KEY=
+AI_MODEL=
+AI_TIMEOUT_MS=15000
+AI_RATE_LIMIT_WINDOW_MS=60000
+AI_RATE_LIMIT_MAX_REQUESTS=10
+AI_DAILY_LIMIT_PER_USER=50
 ```
 
 ## Scripts
@@ -79,6 +87,7 @@ Authenticated:
 
 ```txt
 GET /api/auth/me
+POST /api/ai/chat
 GET /api/dashboard/summary
 GET|POST /api/wallets
 GET|PATCH|DELETE /api/wallets/:id
@@ -109,3 +118,36 @@ GET /api/reports/budgets/export
 GET /api/reports/debts/export
 GET /api/reports/goals/export
 ```
+
+## AI Dashboard Analysis
+
+`POST /api/ai/chat` is an authenticated, read-only dashboard analysis endpoint. The server validates the message, applies in-memory per-user limits, builds summarized dashboard context for the authenticated user, and sends only that context to the configured AI provider.
+
+Default local provider:
+
+```env
+AI_PROVIDER=mock
+```
+
+The mock provider does not call an external service and is suitable for local development.
+
+OpenAI-compatible HTTP provider:
+
+```env
+AI_PROVIDER=http
+AI_BASE_URL=https://your-openai-compatible-provider.example/v1
+AI_API_KEY=replace-with-real-key
+AI_MODEL=your-model
+```
+
+The HTTP provider calls `POST {AI_BASE_URL}/chat/completions` from the server only. Never expose `AI_API_KEY` to the client.
+
+Rate limits are configured with:
+
+```env
+AI_RATE_LIMIT_WINDOW_MS=60000
+AI_RATE_LIMIT_MAX_REQUESTS=10
+AI_DAILY_LIMIT_PER_USER=50
+```
+
+The current limiter is in-memory and resets when the server restarts.
