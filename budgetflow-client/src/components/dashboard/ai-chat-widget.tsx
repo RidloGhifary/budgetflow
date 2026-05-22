@@ -96,10 +96,10 @@ export function AiChatWidget({ month, periodLabel, year }: AiChatWidgetProps) {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-30">
+    <div className="fixed bottom-4 right-4 z-30 sm:bottom-5 sm:right-5">
       {isOpen ? (
-        <div className="flex h-[560px] max-h-[calc(100vh-2.5rem)] w-[min(380px,calc(100vw-2.5rem))] flex-col rounded-xl border border-border bg-card shadow-2xl">
-          <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+        <div className="flex h-[min(78vh,620px)] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] flex-col rounded-xl border border-border bg-card shadow-2xl sm:h-[620px] sm:max-h-[calc(100vh-2.5rem)] sm:w-[440px]">
+          <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
             <div className="flex items-start gap-3">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <Bot className="h-4 w-4" />
@@ -114,7 +114,7 @@ export function AiChatWidget({ month, periodLabel, year }: AiChatWidgetProps) {
             </Button>
           </div>
 
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
             {messages.length === 0 ? (
               <div className="space-y-4">
                 <div className="rounded-lg border border-border bg-secondary/50 p-4">
@@ -157,10 +157,10 @@ export function AiChatWidget({ month, periodLabel, year }: AiChatWidgetProps) {
             {errorMessage ? <p className="rounded-md border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">{errorMessage}</p> : null}
           </div>
 
-          <form className="space-y-3 border-t border-border p-4" onSubmit={handleSubmit}>
+          <form className="space-y-3 border-t border-border p-5" onSubmit={handleSubmit}>
             <textarea
               ref={inputRef}
-              className="min-h-20 w-full resize-none rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-50"
+              className="min-h-24 w-full resize-none rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isSending}
               maxLength={500}
               onChange={(event) => setInput(event.target.value)}
