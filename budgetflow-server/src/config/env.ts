@@ -15,7 +15,12 @@ const envSchema = z.object({
   AI_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
   AI_DAILY_LIMIT_PER_USER: z.coerce.number().int().positive().default(50),
   AI_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60000),
-  AI_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(10)
+  AI_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(10),
+  AUTH_REGISTER_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
+  AUTH_REGISTER_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
+  AUTH_LOGIN_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
+  AUTH_LOGIN_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
+  BLOCKED_EMAIL_DOMAINS: z.string().optional().default("")
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -42,5 +47,12 @@ export const env = {
     dailyLimitPerUser: parsedEnv.data.AI_DAILY_LIMIT_PER_USER,
     rateLimitWindowMs: parsedEnv.data.AI_RATE_LIMIT_WINDOW_MS,
     rateLimitMaxRequests: parsedEnv.data.AI_RATE_LIMIT_MAX_REQUESTS
+  },
+  auth: {
+    registerRateLimitWindowMs: parsedEnv.data.AUTH_REGISTER_RATE_LIMIT_WINDOW_MS,
+    registerRateLimitMax: parsedEnv.data.AUTH_REGISTER_RATE_LIMIT_MAX,
+    loginRateLimitWindowMs: parsedEnv.data.AUTH_LOGIN_RATE_LIMIT_WINDOW_MS,
+    loginRateLimitMax: parsedEnv.data.AUTH_LOGIN_RATE_LIMIT_MAX,
+    blockedEmailDomains: parsedEnv.data.BLOCKED_EMAIL_DOMAINS
   }
 };

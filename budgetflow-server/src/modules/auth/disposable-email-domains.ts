@@ -1,0 +1,15 @@
+export const disposableEmailDomains = [
+  "10minutemail.com",
+  "dispostable.com",
+  "fakeinbox.com",
+  "getnada.com",
+  "guerrillamail.com",
+  "maildrop.cc",
+  "mailinator.com",
+  "sharklasers.com",
+  "temp-mail.org",
+  "tempmail.com",
+  "throwawaymail.com",
+  "trashmail.com",
+  "yopmail.com"
+];

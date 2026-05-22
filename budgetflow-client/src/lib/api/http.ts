@@ -62,8 +62,10 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
 
   if (!response.ok) {
     const errorPayload = payload as ApiErrorPayload | null;
+    const serverMessage = typeof errorPayload?.message === "string" ? errorPayload.message : "";
+
     throw new ApiError(
-      getSafeFallbackMessage(response.status, "request"),
+      isSafeUserMessage(serverMessage) ? serverMessage : getSafeFallbackMessage(response.status, "request"),
       response.status,
       errorPayload?.code,
       errorPayload?.errors
@@ -181,6 +183,16 @@ export function getFriendlyApiError(error: unknown, operation: ErrorOperation = 
       return "Unable to connect. Please check your connection and try again.";
     }
 
+    if (error.status === 429) {
+      return "Too many attempts. Please wait a few minutes and try again.";
+    }
+
+    const fieldErrorMessage = getFirstSafeFieldError(error.errors);
+
+    if (fieldErrorMessage) {
+      return fieldErrorMessage;
+    }
+
     return isSafeUserMessage(error.message) ? error.message : getSafeFallbackMessage(error.status, operation);
   }
 
@@ -206,6 +218,10 @@ function getSafeFallbackMessage(status: number, operation: ErrorOperation) {
 
   if (status === 409) {
     return "This change conflicts with an existing record. Please review the details and try again.";
+  }
+
+  if (status === 429) {
+    return "Too many attempts. Please wait a few minutes and try again.";
   }
 
   if (status === 422 || status === 400) {
@@ -238,6 +254,22 @@ function isSafeUserMessage(message: string) {
   ];
 
   return !unsafePatterns.some((pattern) => pattern.test(message));
+}
+
+function getFirstSafeFieldError(errors: ApiErrorPayload["errors"] | undefined) {
+  if (!errors) {
+    return null;
+  }
+
+  for (const value of Object.values(errors)) {
+    const message = Array.isArray(value) ? value[0] : value;
+
+    if (typeof message === "string" && isSafeUserMessage(message)) {
+      return message;
+    }
+  }
+
+  return null;
 }
 
 function getFileNameFromDisposition(contentDisposition: string | null) {

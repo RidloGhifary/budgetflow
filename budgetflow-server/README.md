@@ -38,6 +38,11 @@ AI_TIMEOUT_MS=15000
 AI_RATE_LIMIT_WINDOW_MS=60000
 AI_RATE_LIMIT_MAX_REQUESTS=10
 AI_DAILY_LIMIT_PER_USER=50
+AUTH_REGISTER_RATE_LIMIT_WINDOW_MS=900000
+AUTH_REGISTER_RATE_LIMIT_MAX=5
+AUTH_LOGIN_RATE_LIMIT_WINDOW_MS=900000
+AUTH_LOGIN_RATE_LIMIT_MAX=10
+BLOCKED_EMAIL_DOMAINS=
 ```
 
 ## Scripts
@@ -71,6 +76,25 @@ docker compose exec server pnpm migration:deploy
 ```
 
 The server service runs on `http://localhost:4000`, uses PostgreSQL at the Docker hostname `postgres`, and exposes health at `http://localhost:4000/health`.
+
+## Auth Security
+
+Registration and login normalize emails by trimming whitespace and lowercasing before validation, lookup, and storage. Registration blocks common disposable email domains and can merge additional blocked domains from:
+
+```env
+BLOCKED_EMAIL_DOMAINS=example.com,test.com
+```
+
+Auth endpoints use in-memory rate limits:
+
+```env
+AUTH_REGISTER_RATE_LIMIT_WINDOW_MS=900000
+AUTH_REGISTER_RATE_LIMIT_MAX=5
+AUTH_LOGIN_RATE_LIMIT_WINDOW_MS=900000
+AUTH_LOGIN_RATE_LIMIT_MAX=10
+```
+
+The register limiter is IP-based. The login limiter uses IP plus normalized email when present. Rate-limit responses return `429` with a user-friendly message. The current limiter is in-memory and resets when the server restarts.
 
 ## API Surface
 

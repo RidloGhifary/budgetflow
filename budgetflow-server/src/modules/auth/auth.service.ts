@@ -4,6 +4,7 @@ import { isPrismaUniqueConstraintError } from "../../utils/prisma-error";
 import { signAuthToken } from "../../utils/jwt";
 import { createUser, findUserByEmail, findUserById } from "../users/user.repository";
 import { toSafeUser } from "../users/user.mapper";
+import { normalizeEmail } from "./email-policy";
 import type { LoginInput, RegisterInput } from "./auth.validators";
 import type { SafeUser } from "../../types/user";
 
@@ -13,7 +14,8 @@ interface AuthResult {
 }
 
 export async function registerUser(input: RegisterInput): Promise<AuthResult> {
-  const existingUser = await findUserByEmail(input.email);
+  const email = normalizeEmail(input.email);
+  const existingUser = await findUserByEmail(email);
 
   if (existingUser) {
     throw new ConflictError("Email is already registered");
@@ -22,7 +24,7 @@ export async function registerUser(input: RegisterInput): Promise<AuthResult> {
   const passwordHash = await hashPassword(input.password);
   const user = await createUser({
     name: input.name,
-    email: input.email,
+    email,
     passwordHash
   }).catch((error: unknown) => {
     if (isUniqueConstraintError(error)) {
@@ -39,7 +41,8 @@ export async function registerUser(input: RegisterInput): Promise<AuthResult> {
 }
 
 export async function loginUser(input: LoginInput): Promise<AuthResult> {
-  const user = await findUserByEmail(input.email);
+  const email = normalizeEmail(input.email);
+  const user = await findUserByEmail(email);
 
   if (!user) {
     throw new UnauthorizedError("Invalid email or password");
