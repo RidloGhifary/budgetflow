@@ -46,3 +46,7 @@ docker compose up --build
 ```
 
 The client service runs on `http://localhost:3000` and uses `NEXT_PUBLIC_API_URL=http://localhost:4000/api` for browser requests to the backend.
+
+## AI Dashboard Chat
+
+The Dashboard page includes a floating `Ask AI` widget. It only sends chat messages to the BudgetFlow server at `/api/ai/chat`; the browser never receives AI provider keys or provider URLs. Configure the server AI provider with the server `.env` values, or use `AI_PROVIDER=mock` for local development.

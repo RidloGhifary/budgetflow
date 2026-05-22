@@ -102,6 +102,7 @@ export async function apiFileRequest(path: string, options: RequestInit = {}) {
 
 export type ErrorOperation =
   | "addSavingContribution"
+  | "aiChat"
   | "createBudget"
   | "createCategory"
   | "createDebt"
@@ -136,6 +137,7 @@ export type ErrorOperation =
 
 const operationMessages: Record<ErrorOperation, string> = {
   addSavingContribution: "Unable to add this contribution. Please check the details and try again.",
+  aiChat: "AI analysis is unavailable right now. Please try again.",
   createBudget: "Unable to create this budget. Please check the details and try again.",
   createCategory: "Unable to create this category. Please check the details and try again.",
   createDebt: "Unable to create this debt. Please check the details and try again.",
