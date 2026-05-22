@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
-  CircleDollarSign,
   CreditCard,
   FolderKanban,
   Goal,
@@ -34,9 +34,13 @@ const navItems = [
 function BrandMark() {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <CircleDollarSign className="h-5 w-5" />
-      </div>
+      <Image
+        alt="BudgetFlow"
+        className="h-10 w-10 rounded-lg border border-border bg-card object-cover shadow-sm"
+        height={40}
+        src="/icon.png"
+        width={40}
+      />
       <div>
         <p className="text-lg font-bold leading-none text-foreground">BudgetFlow</p>
         <p className="mt-1 text-xs text-muted-foreground">Finance dashboard</p>

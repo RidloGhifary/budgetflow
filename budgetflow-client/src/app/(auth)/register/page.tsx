@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleDollarSign, LockKeyhole, Mail, UserRound } from "lucide-react";
+import { LockKeyhole, Mail, UserRound } from "lucide-react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 
 import { PublicAuthRedirect } from "@/components/auth/public-auth-redirect";
@@ -52,9 +53,13 @@ export default function RegisterPage() {
           <section className="hidden lg:block">
             <div className="max-w-xl">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <CircleDollarSign className="h-6 w-6" />
-                </div>
+                <Image
+                  alt="BudgetFlow"
+                  className="h-12 w-12 rounded-lg border border-border bg-card object-cover shadow-sm"
+                  height={48}
+                  src="/icon.png"
+                  width={48}
+                />
                 <div>
                   <p className="text-2xl font-bold text-foreground">BudgetFlow</p>
                   <p className="text-sm text-muted-foreground">Manual personal finance dashboard</p>
@@ -75,9 +80,13 @@ export default function RegisterPage() {
           <section className="rounded-lg border border-border bg-card p-6 shadow-soft sm:p-8">
             <div className="mb-8 lg:hidden">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <CircleDollarSign className="h-5 w-5" />
-                </div>
+                <Image
+                  alt="BudgetFlow"
+                  className="h-11 w-11 rounded-lg border border-border bg-card object-cover shadow-sm"
+                  height={44}
+                  src="/icon.png"
+                  width={44}
+                />
                 <div>
                   <p className="text-xl font-bold text-foreground">BudgetFlow</p>
                   <p className="text-xs text-muted-foreground">Finance dashboard</p>

@@ -11,7 +11,6 @@ import {
   WalletCards
 } from "lucide-react";
 
-import { AiChatWidget } from "@/components/dashboard/ai-chat-widget";
 import { DashboardCharts } from "@/components/dashboard/dashboard-charts";
 import { DashboardList } from "@/components/dashboard/dashboard-list";
 import { SecondaryMetricCard } from "@/components/dashboard/secondary-metric-card";
@@ -123,8 +122,6 @@ export default function DashboardPage() {
           </section>
         </>
       ) : null}
-
-      <AiChatWidget month={period.month} periodLabel={periodLabel} year={period.year} />
     </div>
   );
 }

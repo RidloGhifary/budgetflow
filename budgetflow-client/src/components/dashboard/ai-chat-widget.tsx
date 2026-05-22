@@ -1,17 +1,19 @@
 "use client";
 
 import { FormEvent, KeyboardEvent, useMemo, useRef, useState } from "react";
-import { Bot, MessageCircle, Send, Sparkles, X } from "lucide-react";
+import Image from "next/image";
+import { MessageCircle, Send, Sparkles, X } from "lucide-react";
 
+import { formatMonthYear, getCurrentMonthYear } from "@/components/shared/month-year-selector";
 import { Button } from "@/components/ui/button";
 import { aiApi } from "@/lib/api/ai.api";
 import { getFriendlyApiError } from "@/lib/api/http";
 import { cn } from "@/lib/utils";
 
 interface AiChatWidgetProps {
-  month: number;
-  periodLabel: string;
-  year: number;
+  month?: number;
+  periodLabel?: string;
+  year?: number;
 }
 
 interface ChatMessage {
@@ -29,14 +31,20 @@ const suggestedQuestions = [
 ];
 
 export function AiChatWidget({ month, periodLabel, year }: AiChatWidgetProps) {
+  const defaultPeriod = useMemo(() => getCurrentMonthYear(), []);
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const selectedMonth = month ?? defaultPeriod.month;
+  const selectedYear = year ?? defaultPeriod.year;
   const canSend = input.trim().length > 0 && !isSending;
-  const subtitle = useMemo(() => `Analyzing ${periodLabel}`, [periodLabel]);
+  const subtitle = useMemo(
+    () => `Analyzing ${periodLabel ?? formatMonthYear(selectedMonth, selectedYear)}`,
+    [periodLabel, selectedMonth, selectedYear]
+  );
 
   const sendMessage = async (message: string) => {
     const trimmedMessage = message.trim();
@@ -58,7 +66,7 @@ export function AiChatWidget({ month, periodLabel, year }: AiChatWidgetProps) {
     setMessages((current) => [...current, userMessage]);
 
     try {
-      const response = await aiApi.chat({ message: trimmedMessage, month, year });
+      const response = await aiApi.chat({ message: trimmedMessage, month: selectedMonth, year: selectedYear });
       const assistantMessage: ChatMessage = {
         content: response.data.answer,
         id: crypto.randomUUID(),
@@ -101,9 +109,13 @@ export function AiChatWidget({ month, periodLabel, year }: AiChatWidgetProps) {
         <div className="flex h-[min(78vh,620px)] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] flex-col rounded-xl border border-border bg-card shadow-2xl sm:h-[620px] sm:max-h-[calc(100vh-2.5rem)] sm:w-[440px]">
           <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
             <div className="flex items-start gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Bot className="h-4 w-4" />
-              </span>
+              <Image
+                alt="BudgetFlow AI"
+                className="h-9 w-9 rounded-lg border border-border bg-card object-cover shadow-sm"
+                height={36}
+                src="/icon.png"
+                width={36}
+              />
               <div>
                 <p className="font-semibold text-foreground">BudgetFlow AI</p>
                 <p className="text-xs text-muted-foreground">{subtitle}</p>
@@ -120,10 +132,10 @@ export function AiChatWidget({ month, periodLabel, year }: AiChatWidgetProps) {
                 <div className="rounded-lg border border-border bg-secondary/50 p-4">
                   <div className="flex items-center gap-2 text-sm font-semibold text-primary">
                     <Sparkles className="h-4 w-4" />
-                    Ask about this dashboard
+                    Ask about your BudgetFlow dashboard
                   </div>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    I can explain your income, spending, budgets, debts, saving goals, and cash flow for the selected month.
+                    I can explain your income, spending, budgets, debts, saving goals, and cash flow for the selected period.
                   </p>
                 </div>
                 <div className="space-y-2">
