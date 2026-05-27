@@ -42,6 +42,7 @@ ENV NODE_ENV=production
 
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma
+COPY scripts ./scripts
 RUN pnpm install --frozen-lockfile \
   && pnpm prisma:generate \
   && pnpm prune --prod
@@ -50,4 +51,4 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 4000
 
-CMD ["pnpm", "start"]
+CMD ["pnpm", "container:start"]

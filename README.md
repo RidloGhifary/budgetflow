@@ -18,13 +18,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-In another terminal, run the database migrations once the containers are up:
-
-```bash
-docker compose exec server pnpm migration:deploy
-```
-
-Then open `http://localhost:3000`, register a user, and use the app locally.
+The server applies Prisma migrations before starting. Then open `http://localhost:3000`, register a user, and use the app locally.
 
 ## Daily Commands
 
@@ -38,13 +32,14 @@ docker compose logs -f postgres
 ```
 
 Use `docker compose up --build` after dependency or Dockerfile changes.
+The development containers run `pnpm install --frozen-lockfile` on startup so the persisted `node_modules` volumes stay aligned with the lockfiles.
 
 ## Prisma Commands
 
-Run migrations safely inside the server container:
+The server container waits for PostgreSQL and runs `prisma migrate deploy` during startup. To inspect migration status without changing the database:
 
 ```bash
-docker compose exec server pnpm migration:deploy
+docker compose exec server pnpm exec prisma migrate status --schema prisma/schema.prisma
 ```
 
 Generate Prisma Client manually after schema changes:
@@ -104,7 +99,9 @@ This permanently deletes the local Docker PostgreSQL data.
 
 ## Troubleshooting
 
-- If the server starts but register/login fails, run `docker compose exec server pnpm migration:deploy`.
+- If the server fails during startup, check `docker compose logs -f server`; the startup script prints database wait, Prisma generate, and Prisma migration output with the database password masked.
+- If you see `DATABASE_URL is not a valid URL`, make sure `.env` uses a numeric port, for example `postgresql://budgetflow:budgetflow_password@postgres:5432/budgetflow?schema=public`.
+- If PostgreSQL reports that a role or database does not exist, your persisted `budgetflow_postgres_data` volume was initialized with different credentials. Update `.env` to match the existing local volume, or intentionally recreate the local-only database volume if you do not need its data.
 - If ports are already in use, change `CLIENT_PORT` or `SERVER_PORT` in `.env`; PostgreSQL is intentionally exposed on `5432`.
 - If dependencies look stale, rebuild with `docker compose up --build`.
 - If hot reload misses changes on macOS, the compose file already enables polling for both client and server watchers.

@@ -13,7 +13,10 @@ services:
       - budgetflow_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test:
-        ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+        [
+          "CMD-SHELL",
+          'PGPASSWORD="$${POSTGRES_PASSWORD}" psql -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" -c "SELECT 1" >/dev/null',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,10 +28,12 @@ services:
       context: ./budgetflow-server
       target: development
     restart: unless-stopped
-    command: sh -c "pnpm prisma:generate && pnpm migration:run && pnpm migration:deploy && pnpm dev"
+    command: sh -c "CI=true pnpm install --frozen-lockfile --prefer-offline && pnpm container:dev"
     environment:
       PORT: 4000
       DATABASE_URL: ${DATABASE_URL:-postgresql://budgetflow:budgetflow_password@postgres:5432/budgetflow?schema=public}
+      DB_WAIT_TIMEOUT_MS: ${DB_WAIT_TIMEOUT_MS:-60000}
+      DB_WAIT_INTERVAL_MS: ${DB_WAIT_INTERVAL_MS:-1000}
       JWT_SECRET: ${JWT_SECRET:-replace-with-a-long-random-secret}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       CLIENT_URL: ${CLIENT_URL:-http://localhost:3000}
@@ -72,9 +77,10 @@ services:
       context: ./budgetflow-client
       target: development
     restart: unless-stopped
-    command: pnpm run dev --hostname 0.0.0.0
+    command: sh -c "CI=true pnpm install --frozen-lockfile --prefer-offline && pnpm run dev --hostname 0.0.0.0"
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+      BUDGETFLOW_API_PROXY_URL: ${BUDGETFLOW_API_PROXY_URL:-http://server:4000/api}
       NEXT_TELEMETRY_DISABLED: "1"
       WATCHPACK_POLLING: "true"
     ports:
