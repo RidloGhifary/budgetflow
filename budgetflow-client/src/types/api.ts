@@ -6,6 +6,44 @@ export interface User {
   updatedAt: string;
 }
 
+export type BackgroundJobStatus = "PENDING" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
+
+export type DataExportStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "EXPIRED" | "CANCELLED";
+
+export type DataExportFormat = "CSV";
+
+export type DataExportType = "TRANSACTIONS";
+
+export interface DataExportJobSummary {
+  status: BackgroundJobStatus;
+  progress: number;
+  attempts: number;
+  maxAttempts: number;
+}
+
+export interface DataExport {
+  id: string;
+  userId: string;
+  exportType: DataExportType;
+  format: DataExportFormat;
+  status: DataExportStatus;
+  filters?: Record<string, unknown> | null;
+  fileName?: string | null;
+  fileSize?: number | null;
+  mimeType?: string | null;
+  rowCount?: number | null;
+  errorMessage?: string | null;
+  requestedAt: string;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  failedAt?: string | null;
+  expiresAt?: string | null;
+  downloadedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  job?: DataExportJobSummary | null;
+}
+
 export type WalletType = "CASH" | "BANK" | "EWALLET" | "CREDIT_CARD" | "OTHER";
 
 export interface Wallet {
@@ -282,6 +320,13 @@ export interface DashboardSummary {
   incomeVsExpense: DashboardMonthlyFlow[];
   expenseByCategory: DashboardExpenseCategory[];
   overBudgetCategories: DashboardOverBudgetCategory[];
+}
+
+export interface PaginationMeta {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
 }
 
 export type ReportType = "monthly" | "range" | "transactions" | "budgets" | "debts" | "goals";

@@ -108,6 +108,7 @@ export type ErrorOperation =
   | "createBudget"
   | "createCategory"
   | "createDebt"
+  | "createExport"
   | "createGoal"
   | "createTransaction"
   | "createWallet"
@@ -122,6 +123,7 @@ export type ErrorOperation =
   | "loadCategories"
   | "loadDashboard"
   | "loadDebts"
+  | "loadExports"
   | "loadGoals"
   | "loadReport"
   | "loadTransactions"
@@ -143,6 +145,7 @@ const operationMessages: Record<ErrorOperation, string> = {
   createBudget: "Unable to create this budget. Please check the details and try again.",
   createCategory: "Unable to create this category. Please check the details and try again.",
   createDebt: "Unable to create this debt. Please check the details and try again.",
+  createExport: "Unable to request this export. Please check the filters and try again.",
   createGoal: "Unable to create this saving goal. Please check the details and try again.",
   createTransaction: "Unable to create this transaction. Please check the details and try again.",
   createWallet: "Unable to create this wallet. Please check the details and try again.",
@@ -157,6 +160,7 @@ const operationMessages: Record<ErrorOperation, string> = {
   loadCategories: "Unable to load categories. Please try again.",
   loadDashboard: "Unable to load your dashboard. Please try again.",
   loadDebts: "Unable to load debts. Please try again.",
+  loadExports: "Unable to load exports. Please try again.",
   loadGoals: "Unable to load saving goals. Please try again.",
   loadReport: "Unable to load reports. Please try again.",
   loadTransactions: "Unable to load transactions. Please try again.",

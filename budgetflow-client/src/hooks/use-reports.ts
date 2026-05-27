@@ -44,17 +44,20 @@ export function getFiltersForReportType(reportType: ReportType, filters: ReportF
 
 export function useReportData(reportType: ReportType, filters: ReportFilterState, enabled: boolean) {
   const [report, setReport] = useState<ReportData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(enabled);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const filterKey = useMemo(() => JSON.stringify(getFiltersForReportType(reportType, filters)), [filters, reportType]);
+  const [activeFilterKey, setActiveFilterKey] = useState<string | null>(enabled ? filterKey : null);
 
   const loadReport = useCallback(async () => {
     if (!enabled) {
       setIsLoading(false);
+      setActiveFilterKey(null);
       setErrorMessage(null);
       return;
     }
 
+    setActiveFilterKey(filterKey);
     setIsLoading(true);
     setErrorMessage(null);
 
@@ -74,7 +77,7 @@ export function useReportData(reportType: ReportType, filters: ReportFilterState
 
   return {
     report,
-    isLoading,
+    isLoading: isLoading || (enabled && activeFilterKey !== filterKey),
     errorMessage,
     reload: loadReport
   };

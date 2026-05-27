@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Download, FileSpreadsheet, RefreshCw } from "lucide-react";
 
+import { DataExportPanel } from "@/components/reports/data-export-panel";
 import { ReportFilters } from "@/components/reports/report-filters";
 import { ReportPreview } from "@/components/reports/report-preview";
 import { PageHeader } from "@/components/shared/page-header";
@@ -130,6 +131,13 @@ export default function ReportsPage() {
         report={report}
         reportType={reportType}
         validationMessage={validationMessage}
+      />
+
+      <DataExportPanel
+        categories={categories}
+        isCategoriesLoading={isCategoriesLoading}
+        isWalletsLoading={isWalletsLoading}
+        wallets={wallets}
       />
     </div>
   );
