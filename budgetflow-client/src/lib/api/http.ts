@@ -124,6 +124,7 @@ export type ErrorOperation =
   | "loadDashboard"
   | "loadDebts"
   | "loadExports"
+  | "loadFinancialHealth"
   | "loadGoals"
   | "loadReport"
   | "loadTransactions"
@@ -161,6 +162,7 @@ const operationMessages: Record<ErrorOperation, string> = {
   loadDashboard: "Unable to load your dashboard. Please try again.",
   loadDebts: "Unable to load debts. Please try again.",
   loadExports: "Unable to load exports. Please try again.",
+  loadFinancialHealth: "Unable to load financial health right now.",
   loadGoals: "Unable to load saving goals. Please try again.",
   loadReport: "Unable to load reports. Please try again.",
   loadTransactions: "Unable to load transactions. Please try again.",

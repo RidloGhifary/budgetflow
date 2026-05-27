@@ -329,6 +329,62 @@ export interface PaginationMeta {
   totalPages: number;
 }
 
+export type FinancialHealthStatus = "not_enough_data" | "excellent" | "good" | "fair" | "needs_attention" | "critical";
+
+export type FinancialHealthComponentKey =
+  | "cashflow_health"
+  | "savings_rate"
+  | "budget_discipline"
+  | "recurring_burden"
+  | "spending_stability";
+
+export type FinancialHealthInsightType = "positive" | "warning" | "critical" | "neutral";
+
+export type FinancialHealthInsightSeverity = "low" | "medium" | "high";
+
+export interface FinancialHealthPeriod {
+  startDate: string;
+  endDate: string;
+}
+
+export interface FinancialHealthComponent {
+  key: FinancialHealthComponentKey;
+  label: string;
+  score: number | null;
+  weight: number;
+  available: boolean;
+  explanation: string;
+  values?: Record<string, number | string | null>;
+}
+
+export interface FinancialHealthInsight {
+  id: string;
+  type: FinancialHealthInsightType;
+  severity: FinancialHealthInsightSeverity;
+  title: string;
+  description: string;
+  action?: string;
+  relatedMetricKey?: FinancialHealthComponentKey;
+  categoryId?: string;
+  categoryName?: string;
+  supportingValues?: Record<string, number | string | null>;
+}
+
+export interface FinancialHealth {
+  score: number;
+  status: FinancialHealthStatus;
+  summary: string;
+  period: FinancialHealthPeriod;
+  comparisonPeriod: FinancialHealthPeriod;
+  components: FinancialHealthComponent[];
+  insights: FinancialHealthInsight[];
+  metadata: {
+    calculatedAt: string;
+    hasEnoughData: boolean;
+    missingMetrics: FinancialHealthComponentKey[];
+  };
+}
+
 export type ReportType = "monthly" | "range" | "transactions" | "budgets" | "debts" | "goals";
 
 export type ExportFormat = "xlsx" | "csv";
