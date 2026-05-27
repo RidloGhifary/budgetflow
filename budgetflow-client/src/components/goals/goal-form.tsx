@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 
+import { AmountInput } from "@/components/ui/amount-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { savingGoalSchema, type SavingGoalFormValues } from "@/lib/validation/goals";
@@ -33,7 +34,7 @@ export function GoalForm({ goal, isSubmitting, onCancel, onSubmit }: GoalFormPro
     resolver: zodResolver(savingGoalSchema),
     defaultValues: {
       name: goal?.name ?? "",
-      targetAmount: goal?.targetAmount ?? 0,
+      targetAmount: goal?.targetAmount,
       deadline: getDateInputValue(goal?.deadline),
       note: goal?.note ?? "",
       status: ""
@@ -43,7 +44,7 @@ export function GoalForm({ goal, isSubmitting, onCancel, onSubmit }: GoalFormPro
   useEffect(() => {
     reset({
       name: goal?.name ?? "",
-      targetAmount: goal?.targetAmount ?? 0,
+      targetAmount: goal?.targetAmount,
       deadline: getDateInputValue(goal?.deadline),
       note: goal?.note ?? "",
       status: ""
@@ -65,13 +66,9 @@ export function GoalForm({ goal, isSubmitting, onCancel, onSubmit }: GoalFormPro
 
         <label className="block space-y-2">
           <span className="text-sm font-medium text-foreground">Target Amount</span>
-          <Input
+          <AmountInput
             aria-invalid={Boolean(errors.targetAmount)}
-            inputMode="numeric"
-            min="0"
             placeholder="10000000"
-            step="10000"
-            type="number"
             {...register("targetAmount")}
           />
           {errors.targetAmount ? <p className="text-xs text-red-600">{errors.targetAmount.message}</p> : null}

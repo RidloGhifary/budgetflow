@@ -5,6 +5,7 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 
+import { AmountInput } from "@/components/ui/amount-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { budgetSchema, type BudgetFormValues } from "@/lib/validation/budgets";
@@ -62,7 +63,7 @@ export function BudgetForm({
       categoryId: budget?.categoryId ?? "",
       month: budget?.month ?? selectedMonth,
       year: budget?.year ?? selectedYear,
-      limitAmount: budget?.limitAmount ?? 0
+      limitAmount: budget?.limitAmount
     }
   });
 
@@ -78,7 +79,7 @@ export function BudgetForm({
       categoryId: budget?.categoryId ?? "",
       month: budget?.month ?? selectedMonth,
       year: budget?.year ?? selectedYear,
-      limitAmount: budget?.limitAmount ?? 0
+      limitAmount: budget?.limitAmount
     });
   }, [budget, reset, selectedMonth, selectedYear]);
 
@@ -135,13 +136,9 @@ export function BudgetForm({
 
         <label className="block space-y-2 md:col-span-2 xl:col-span-4">
           <span className="text-sm font-medium text-foreground">Limit Amount</span>
-          <Input
+          <AmountInput
             aria-invalid={Boolean(errors.limitAmount)}
-            inputMode="numeric"
-            min="0"
             placeholder="2500000"
-            step="10000"
-            type="number"
             {...register("limitAmount")}
           />
           {errors.limitAmount ? <p className="text-xs text-red-600">{errors.limitAmount.message}</p> : null}
@@ -154,7 +151,7 @@ export function BudgetForm({
           message={
             <>
               Create an expense category before setting a budget.{" "}
-              <Link className="font-semibold text-primary hover:text-[#005F4F]" href="/categories">
+              <Link className="font-semibold text-primary hover:text-primary/80" href="/categories">
                 Go to categories
               </Link>
             </>

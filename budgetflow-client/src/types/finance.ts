@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export type TransactionType = "INCOME" | "EXPENSE";
 
 export type DebtStatus = "UNPAID" | "PARTIAL" | "PAID";
@@ -23,8 +25,8 @@ export interface FinancialSummary {
 
 export interface SecondaryMetric {
   label: string;
-  value: string;
-  helper: string;
+  value: ReactNode;
+  helper: ReactNode;
   progress?: number;
   tone: StatusTone;
 }

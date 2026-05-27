@@ -51,6 +51,9 @@ BLOCKED_EMAIL_DOMAINS=
 pnpm dev
 pnpm build
 pnpm start
+pnpm container:dev
+pnpm container:start
+pnpm container:worker
 pnpm lint
 pnpm prisma:generate
 pnpm migration:run
@@ -70,13 +73,15 @@ cp .env.example .env
 docker compose up --build
 ```
 
-After the containers are running, apply migrations inside the server container:
-
-```bash
-docker compose exec server pnpm migration:deploy
-```
+The server container waits for PostgreSQL, generates Prisma Client, runs `prisma migrate deploy`, and then starts the API. Migration errors are written directly to the container logs with the `DATABASE_URL` password masked.
 
 The server service runs on `http://localhost:4000`, uses PostgreSQL at the Docker hostname `postgres`, and exposes health at `http://localhost:4000/health`.
+
+To inspect migration status without changing the database:
+
+```bash
+docker compose exec server pnpm exec prisma migrate status --schema prisma/schema.prisma
+```
 
 ## Auth Security
 

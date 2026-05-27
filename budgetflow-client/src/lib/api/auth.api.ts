@@ -12,6 +12,16 @@ export interface LoginInput {
   password: string;
 }
 
+export interface TwoFactorChallenge {
+  challengeId: string;
+  challengeToken: string;
+  email: string;
+  expiresAt: string;
+  twoFactorRequired: true;
+}
+
+export type LoginResponseData = { user: User } | TwoFactorChallenge;
+
 export const authApi = {
   register(input: RegisterInput) {
     return apiRequest<ApiEnvelope<{ user: User }>>("/auth/register", {
@@ -21,7 +31,21 @@ export const authApi = {
   },
 
   login(input: LoginInput) {
-    return apiRequest<ApiEnvelope<{ user: User }>>("/auth/login", {
+    return apiRequest<ApiEnvelope<LoginResponseData>>("/auth/login", {
+      method: "POST",
+      body: input
+    });
+  },
+
+  verifyTwoFactor(input: { challengeId: string; challengeToken: string; code: string }) {
+    return apiRequest<ApiEnvelope<{ user: User }>>("/auth/login/2fa", {
+      method: "POST",
+      body: input
+    });
+  },
+
+  useRecoveryCode(input: { challengeId: string; challengeToken: string; recoveryCode: string }) {
+    return apiRequest<ApiEnvelope<{ user: User }>>("/auth/login/recovery-code", {
       method: "POST",
       body: input
     });

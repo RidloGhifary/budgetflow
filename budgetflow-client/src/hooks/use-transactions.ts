@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { transactionsApi, type TransactionFilters, type TransactionInput } from "@/lib/api/transactions.api";
 import { getFriendlyApiError } from "@/lib/api/http";
+import { subscribeToTransactionsChanged } from "@/lib/events";
 import type { Transaction } from "@/types/api";
 
 export function useTransactions(filters: TransactionFilters) {
@@ -29,6 +30,8 @@ export function useTransactions(filters: TransactionFilters) {
   useEffect(() => {
     void loadTransactions();
   }, [loadTransactions]);
+
+  useEffect(() => subscribeToTransactionsChanged(() => void loadTransactions()), [loadTransactions]);
 
   const createTransaction = useCallback(
     async (input: TransactionInput) => {

@@ -1,4 +1,14 @@
-import type { CategoryType, DebtStatus, DebtType, SavingGoalStatus, TransactionPurpose, TransactionType, WalletType } from "@/types/api";
+import type {
+  CategoryType,
+  DebtStatus,
+  DebtType,
+  RecurringTransactionFrequency,
+  RecurringTransactionStatus,
+  SavingGoalStatus,
+  TransactionPurpose,
+  TransactionType,
+  WalletType
+} from "@/types/api";
 
 export const walletTypeLabels: Record<WalletType, string> = {
   CASH: "Cash",
@@ -38,6 +48,20 @@ export const debtStatusLabels: Record<DebtStatus, string> = {
 
 export const savingGoalStatusLabels: Record<SavingGoalStatus, string> = {
   IN_PROGRESS: "In Progress",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled"
+};
+
+export const recurringFrequencyLabels: Record<RecurringTransactionFrequency, string> = {
+  DAILY: "Daily",
+  WEEKLY: "Weekly",
+  MONTHLY: "Monthly",
+  YEARLY: "Yearly"
+};
+
+export const recurringStatusLabels: Record<RecurringTransactionStatus, string> = {
+  ACTIVE: "Active",
+  PAUSED: "Paused",
   COMPLETED: "Completed",
   CANCELLED: "Cancelled"
 };

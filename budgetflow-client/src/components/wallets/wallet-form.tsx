@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 
+import { AmountInput } from "@/components/ui/amount-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { walletTypeLabels } from "@/lib/labels";
@@ -31,7 +32,7 @@ export function WalletForm({ wallet, isSubmitting, onCancel, onSubmit }: WalletF
     defaultValues: {
       name: wallet?.name ?? "",
       type: wallet?.type ?? "CASH",
-      initialBalance: wallet?.initialBalance ?? 0
+      initialBalance: wallet?.initialBalance
     }
   });
 
@@ -39,7 +40,7 @@ export function WalletForm({ wallet, isSubmitting, onCancel, onSubmit }: WalletF
     reset({
       name: wallet?.name ?? "",
       type: wallet?.type ?? "CASH",
-      initialBalance: wallet?.initialBalance ?? 0
+      initialBalance: wallet?.initialBalance
     });
   }, [reset, wallet]);
 
@@ -68,13 +69,9 @@ export function WalletForm({ wallet, isSubmitting, onCancel, onSubmit }: WalletF
 
       <label className="block space-y-2 md:col-span-2">
         <span className="text-sm font-medium text-foreground">Initial balance</span>
-        <Input
+        <AmountInput
           aria-invalid={Boolean(errors.initialBalance)}
-          inputMode="numeric"
-          min="0"
           placeholder="1500000"
-          step="1000"
-          type="number"
           {...register("initialBalance")}
         />
         {errors.initialBalance ? <p className="text-xs text-red-600">{errors.initialBalance.message}</p> : null}

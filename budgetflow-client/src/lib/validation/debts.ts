@@ -1,9 +1,11 @@
 import { z } from "zod";
 
+import { positiveNumberInput } from "@/lib/validation/numbers";
+
 export const debtTypeValues = ["I_OWE", "OWED_TO_ME"] as const;
 export const debtStatusValues = ["UNPAID", "PARTIAL", "PAID"] as const;
 
-const amountSchema = z.coerce.number().finite("Amount must be a valid number.").positive("Amount must be greater than zero.");
+const amountSchema = positiveNumberInput("Amount");
 const dateInputSchema = z
   .string()
   .optional()

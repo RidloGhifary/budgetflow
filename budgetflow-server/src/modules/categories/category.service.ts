@@ -1,5 +1,9 @@
 import { ConflictError, NotFoundError } from "../../utils/app-error";
 import { isPrismaForeignKeyConstraintError, isPrismaUniqueConstraintError } from "../../utils/prisma-error";
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from "../audit-logs/audit-log.constants";
+import type { AuditRequestContext } from "../audit-logs/audit-log.context";
+import { recordAuditLogSafely } from "../audit-logs/audit-log.service";
+import { getChangedFields } from "../audit-logs/audit-log.sanitizer";
 import {
   createCategory,
   deleteCategory,
@@ -19,7 +23,7 @@ export async function listCategories(userId: string, filters: CategoryQueryInput
   return categories.map(toCategoryResponse);
 }
 
-export async function createUserCategory(userId: string, input: CreateCategoryInput) {
+export async function createUserCategory(userId: string, input: CreateCategoryInput, context?: AuditRequestContext) {
   const category = await createCategory({
     userId,
     name: input.name,
@@ -27,6 +31,16 @@ export async function createUserCategory(userId: string, input: CreateCategoryIn
     icon: input.icon,
     color: input.color
   }).catch(handleCategoryConflict);
+  const snapshot = categorySnapshot(category);
+
+  await recordAuditLogSafely({
+    action: AUDIT_ACTIONS.CATEGORY_CREATED,
+    afterSnapshot: snapshot,
+    context,
+    entityId: category.id,
+    entityType: AUDIT_ENTITY_TYPES.CATEGORY,
+    userId
+  });
 
   return toCategoryResponse(category);
 }
@@ -41,7 +55,7 @@ export async function getUserCategory(userId: string, id: string) {
   return toCategoryResponse(category);
 }
 
-export async function updateUserCategory(userId: string, id: string, input: UpdateCategoryInput) {
+export async function updateUserCategory(userId: string, id: string, input: UpdateCategoryInput, context?: AuditRequestContext) {
   const category = await findCategoryById(userId, id);
 
   if (!category) {
@@ -59,10 +73,26 @@ export async function updateUserCategory(userId: string, id: string, input: Upda
     throw new NotFoundError("Category was not found");
   }
 
+  const beforeSnapshot = categorySnapshot(category);
+  const afterSnapshot = categorySnapshot(updatedCategory);
+
+  await recordAuditLogSafely({
+    action: AUDIT_ACTIONS.CATEGORY_UPDATED,
+    afterSnapshot,
+    beforeSnapshot,
+    context,
+    entityId: id,
+    entityType: AUDIT_ENTITY_TYPES.CATEGORY,
+    metadata: {
+      changedFields: getChangedFields(beforeSnapshot, afterSnapshot)
+    },
+    userId
+  });
+
   return toCategoryResponse(updatedCategory);
 }
 
-export async function deleteUserCategory(userId: string, id: string) {
+export async function deleteUserCategory(userId: string, id: string, context?: AuditRequestContext) {
   const category = await findCategoryById(userId, id);
 
   if (!category) {
@@ -76,6 +106,31 @@ export async function deleteUserCategory(userId: string, id: string) {
 
     throw error;
   });
+
+  await recordAuditLogSafely({
+    action: AUDIT_ACTIONS.CATEGORY_DELETED,
+    beforeSnapshot: categorySnapshot(category),
+    context,
+    entityId: id,
+    entityType: AUDIT_ENTITY_TYPES.CATEGORY,
+    userId
+  });
+}
+
+function categorySnapshot(category: {
+  color?: string | null;
+  icon?: string | null;
+  id: string;
+  name: string;
+  type: string;
+}) {
+  return {
+    color: category.color,
+    icon: category.icon,
+    id: category.id,
+    name: category.name,
+    type: category.type
+  };
 }
 
 function handleCategoryConflict(error: unknown): never {

@@ -3,6 +3,11 @@ import type { Response } from "express";
 import { sendSuccess } from "../../utils/api-response";
 import { asyncHandler } from "../../utils/async-handler";
 import { getAuthenticatedUserId } from "../../utils/auth-context";
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from "../audit-logs/audit-log.constants";
+import { getAuditRequestContext } from "../audit-logs/audit-log.context";
+import { recordAuditLogSafely } from "../audit-logs/audit-log.service";
+import { NOTIFICATION_ENTITY_TYPES, NOTIFICATION_TYPES } from "../notifications/notification.constants";
+import { createUserNotificationSafely } from "../notifications/notification.service";
 import {
   exportBudgetReport,
   exportDebtReport,
@@ -95,38 +100,84 @@ export const getSavingGoalReportController = asyncHandler(async (req, res) => {
 
 export const exportMonthlyReportController = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  const file = await exportMonthlyReport(userId, req.query as unknown as MonthlyExportQueryInput);
+  const query = req.query as unknown as MonthlyExportQueryInput;
+  const file = await exportMonthlyReport(userId, query);
 
+  await auditReportExport(req, userId, "monthly", file, query.format);
   return sendReportFile(res, file);
 });
 
 export const exportTransactionReportController = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  const file = await exportTransactionReport(userId, req.query as unknown as TransactionExportQueryInput);
+  const query = req.query as unknown as TransactionExportQueryInput;
+  const file = await exportTransactionReport(userId, query);
 
+  await auditReportExport(req, userId, "transactions", file, query.format);
   return sendReportFile(res, file);
 });
 
 export const exportBudgetReportController = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  const file = await exportBudgetReport(userId, req.query as unknown as BudgetExportQueryInput);
+  const query = req.query as unknown as BudgetExportQueryInput;
+  const file = await exportBudgetReport(userId, query);
 
+  await auditReportExport(req, userId, "budgets", file, query.format);
   return sendReportFile(res, file);
 });
 
 export const exportDebtReportController = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  const file = await exportDebtReport(userId, req.query as unknown as DebtExportQueryInput);
+  const query = req.query as unknown as DebtExportQueryInput;
+  const file = await exportDebtReport(userId, query);
 
+  await auditReportExport(req, userId, "debts", file, query.format);
   return sendReportFile(res, file);
 });
 
 export const exportSavingGoalReportController = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  const file = await exportSavingGoalReport(userId, req.query as unknown as SavingGoalExportQueryInput);
+  const query = req.query as unknown as SavingGoalExportQueryInput;
+  const file = await exportSavingGoalReport(userId, query);
 
+  await auditReportExport(req, userId, "goals", file, query.format);
   return sendReportFile(res, file);
 });
+
+async function auditReportExport(
+  req: Parameters<typeof getAuditRequestContext>[0],
+  userId: string,
+  reportType: string,
+  file: ExportedReportFile,
+  format: string
+) {
+  await recordAuditLogSafely({
+    action: AUDIT_ACTIONS.REPORT_EXPORTED,
+    context: getAuditRequestContext(req),
+    entityType: AUDIT_ENTITY_TYPES.EXPORT,
+    metadata: {
+      fileName: file.fileName,
+      format,
+      reportType
+    },
+    userId
+  });
+
+  await createUserNotificationSafely({
+    actionUrl: "/reports",
+    category: "SYSTEM",
+    entityType: NOTIFICATION_ENTITY_TYPES.EXPORT,
+    message: "Your report export is ready.",
+    metadata: {
+      fileName: file.fileName,
+      format,
+      reportType
+    },
+    severity: "SUCCESS",
+    title: "Export completed",
+    type: NOTIFICATION_TYPES.EXPORT_COMPLETED,
+    userId
+  });
+}
 
 function sendReportFile(res: Response, file: ExportedReportFile) {
   res.setHeader("Content-Type", file.contentType);

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 
+import { AmountInput } from "@/components/ui/amount-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { debtTypeLabels } from "@/lib/labels";
@@ -36,7 +37,7 @@ export function DebtForm({ debt, isSubmitting, onCancel, onSubmit }: DebtFormPro
       type: debt?.type ?? "I_OWE",
       title: debt?.title ?? "",
       personName: debt?.personName ?? "",
-      totalAmount: debt?.totalAmount ?? 0,
+      totalAmount: debt?.totalAmount,
       dueDate: getDateInputValue(debt?.dueDate),
       note: debt?.note ?? ""
     }
@@ -47,7 +48,7 @@ export function DebtForm({ debt, isSubmitting, onCancel, onSubmit }: DebtFormPro
       type: debt?.type ?? "I_OWE",
       title: debt?.title ?? "",
       personName: debt?.personName ?? "",
-      totalAmount: debt?.totalAmount ?? 0,
+      totalAmount: debt?.totalAmount,
       dueDate: getDateInputValue(debt?.dueDate),
       note: debt?.note ?? ""
     });
@@ -74,13 +75,9 @@ export function DebtForm({ debt, isSubmitting, onCancel, onSubmit }: DebtFormPro
 
         <label className="block space-y-2">
           <span className="text-sm font-medium text-foreground">Total Amount</span>
-          <Input
+          <AmountInput
             aria-invalid={Boolean(errors.totalAmount)}
-            inputMode="numeric"
-            min="0"
             placeholder="500000"
-            step="10000"
-            type="number"
             {...register("totalAmount")}
           />
           {errors.totalAmount ? <p className="text-xs text-red-600">{errors.totalAmount.message}</p> : null}

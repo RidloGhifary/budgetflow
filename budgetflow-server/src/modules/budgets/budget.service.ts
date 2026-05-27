@@ -3,6 +3,11 @@ import type { Category } from "@prisma/client";
 import { ConflictError, NotFoundError, BadRequestError } from "../../utils/app-error";
 import { resolveMonthYear } from "../../utils/date-range";
 import { isPrismaUniqueConstraintError } from "../../utils/prisma-error";
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from "../audit-logs/audit-log.constants";
+import type { AuditRequestContext } from "../audit-logs/audit-log.context";
+import { recordAuditLogSafely } from "../audit-logs/audit-log.service";
+import { getChangedFields } from "../audit-logs/audit-log.sanitizer";
+import { evaluateSmartBudgetNotificationsSafely } from "../smart-notifications/smart-notification.service";
 import {
   createBudget,
   deleteBudget,
@@ -37,7 +42,7 @@ export async function getUserBudget(userId: string, id: string) {
   return toBudgetResponse(budget);
 }
 
-export async function createUserBudget(userId: string, input: CreateBudgetInput) {
+export async function createUserBudget(userId: string, input: CreateBudgetInput, context?: AuditRequestContext) {
   const category = await getOwnedExpenseCategoryOrThrow(userId, input.categoryId);
   const budget = await createBudget({
     userId,
@@ -46,11 +51,27 @@ export async function createUserBudget(userId: string, input: CreateBudgetInput)
     year: input.year,
     limitAmount: input.limitAmount
   }).catch(handleBudgetConflict);
+  const snapshot = budgetSnapshot(budget);
+
+  await recordAuditLogSafely({
+    action: AUDIT_ACTIONS.BUDGET_CREATED,
+    afterSnapshot: snapshot,
+    context,
+    entityId: budget.id,
+    entityType: AUDIT_ENTITY_TYPES.BUDGET,
+    userId
+  });
+
+  await evaluateSmartBudgetNotificationsSafely(userId, {
+    categoryId: budget.categoryId,
+    month: budget.month,
+    year: budget.year
+  });
 
   return toBudgetResponse(budget);
 }
 
-export async function updateUserBudget(userId: string, id: string, input: UpdateBudgetInput) {
+export async function updateUserBudget(userId: string, id: string, input: UpdateBudgetInput, context?: AuditRequestContext) {
   const budget = await findBudgetById(userId, id);
 
   if (!budget) {
@@ -65,11 +86,32 @@ export async function updateUserBudget(userId: string, id: string, input: Update
     year: input.year ?? budget.year,
     limitAmount: input.limitAmount ?? Number(budget.limitAmount)
   }).catch(handleBudgetConflict);
+  const beforeSnapshot = budgetSnapshot(budget);
+  const afterSnapshot = budgetSnapshot(updatedBudget);
+
+  await recordAuditLogSafely({
+    action: AUDIT_ACTIONS.BUDGET_UPDATED,
+    afterSnapshot,
+    beforeSnapshot,
+    context,
+    entityId: id,
+    entityType: AUDIT_ENTITY_TYPES.BUDGET,
+    metadata: {
+      changedFields: getChangedFields(beforeSnapshot, afterSnapshot)
+    },
+    userId
+  });
+
+  await evaluateSmartBudgetNotificationsSafely(userId, {
+    categoryId: updatedBudget.categoryId,
+    month: updatedBudget.month,
+    year: updatedBudget.year
+  });
 
   return toBudgetResponse(updatedBudget);
 }
 
-export async function deleteUserBudget(userId: string, id: string) {
+export async function deleteUserBudget(userId: string, id: string, context?: AuditRequestContext) {
   const budget = await findBudgetById(userId, id);
 
   if (!budget) {
@@ -77,6 +119,15 @@ export async function deleteUserBudget(userId: string, id: string) {
   }
 
   await deleteBudget(budget.id);
+
+  await recordAuditLogSafely({
+    action: AUDIT_ACTIONS.BUDGET_DELETED,
+    beforeSnapshot: budgetSnapshot(budget),
+    context,
+    entityId: id,
+    entityType: AUDIT_ENTITY_TYPES.BUDGET,
+    userId
+  });
 }
 
 export async function getBudgetSummary(userId: string, input: BudgetSummaryQueryInput) {
@@ -133,4 +184,20 @@ function handleBudgetConflict(error: unknown): never {
   }
 
   throw error;
+}
+
+function budgetSnapshot(budget: {
+  categoryId: string;
+  id: string;
+  limitAmount: unknown;
+  month: number;
+  year: number;
+}) {
+  return {
+    categoryId: budget.categoryId,
+    id: budget.id,
+    limitAmount: Number(budget.limitAmount),
+    month: budget.month,
+    year: budget.year
+  };
 }

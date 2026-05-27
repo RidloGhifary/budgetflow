@@ -1,11 +1,13 @@
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
 interface DashboardListItem {
+  id?: string;
   label: string;
-  helper: string;
-  value: string;
+  helper: ReactNode;
+  value: ReactNode;
   icon: LucideIcon;
   tone?: "primary" | "success" | "warning" | "danger" | "blue";
 }
@@ -17,10 +19,10 @@ interface DashboardListProps {
 
 const toneClasses = {
   primary: "bg-secondary text-primary",
-  success: "bg-emerald-50 text-emerald-700",
-  warning: "bg-amber-50 text-amber-700",
-  danger: "bg-red-50 text-red-700",
-  blue: "bg-blue-50 text-blue-700"
+  success: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-200",
+  warning: "bg-amber-500/15 text-amber-700 dark:text-amber-200",
+  danger: "bg-red-500/15 text-red-700 dark:text-red-200",
+  blue: "bg-blue-500/15 text-blue-700 dark:text-blue-200"
 };
 
 export function DashboardList({ emptyMessage = "No records for this period.", items }: DashboardListProps) {
@@ -38,7 +40,7 @@ export function DashboardList({ emptyMessage = "No records for this period.", it
         const Icon = item.icon;
 
         return (
-          <div key={`${item.label}-${item.value}`} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+          <div key={item.id ?? item.label} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0 sm:py-3">
             <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-md", toneClasses[item.tone ?? "primary"])}>
               <Icon className="h-4 w-4" />
             </div>

@@ -5,10 +5,12 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 
+import { AmountInput } from "@/components/ui/amount-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/format";
 import { savingContributionSchema, type SavingContributionFormValues } from "@/lib/validation/goals";
+import { usePreferences } from "@/providers/preferences-provider";
 import type { Category, SavingGoal, Wallet } from "@/types/api";
 
 interface GoalContributionFormProps {
@@ -48,6 +50,7 @@ export function GoalContributionForm({
   walletError,
   wallets
 }: GoalContributionFormProps) {
+  const { privacyModeEnabled } = usePreferences();
   const expenseCategories = useMemo(() => categories.filter((category) => category.type === "EXPENSE"), [categories]);
   const defaultAmount = goal.remainingAmount > 0 ? goal.remainingAmount : 0;
   const {
@@ -109,13 +112,9 @@ export function GoalContributionForm({
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <label className="block space-y-2">
           <span className="text-sm font-medium text-foreground">Amount</span>
-          <Input
+          <AmountInput
             aria-invalid={Boolean(errors.amount)}
-            inputMode="numeric"
-            min="0"
             placeholder="250000"
-            step="10000"
-            type="number"
             {...register("amount")}
           />
           {errors.amount ? <p className="text-xs text-red-600">{errors.amount.message}</p> : null}
@@ -133,7 +132,7 @@ export function GoalContributionForm({
             <option value="">{isWalletsLoading ? "Loading wallets..." : "Select wallet"}</option>
             {wallets.map((wallet) => (
               <option key={wallet.id} value={wallet.id}>
-                {wallet.name} - {formatCurrency(wallet.currentBalance)}
+                {wallet.name} - {privacyModeEnabled ? "Rp *****" : formatCurrency(wallet.currentBalance)}
               </option>
             ))}
           </select>
@@ -172,7 +171,7 @@ export function GoalContributionForm({
           message={
             <>
               Create a wallet before adding a saving contribution.{" "}
-              <Link className="font-semibold text-primary hover:text-[#005F4F]" href="/wallets">
+              <Link className="font-semibold text-primary hover:text-primary/80" href="/wallets">
                 Go to wallets
               </Link>
             </>
@@ -184,7 +183,7 @@ export function GoalContributionForm({
           message={
             <>
               Create an expense category before adding a saving contribution.{" "}
-              <Link className="font-semibold text-primary hover:text-[#005F4F]" href="/categories">
+              <Link className="font-semibold text-primary hover:text-primary/80" href="/categories">
                 Go to categories
               </Link>
             </>

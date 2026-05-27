@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Loader2, Pencil, Plus, RefreshCw, Trash2, WalletCards } from "lucide-react";
 
 import { WalletForm } from "@/components/wallets/wallet-form";
+import { SensitiveValue } from "@/components/privacy/sensitive-value";
 import { PageHeader } from "@/components/shared/page-header";
 import { SectionCard } from "@/components/shared/section-card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { useWallets } from "@/hooks/use-wallets";
 import { getFriendlyApiError } from "@/lib/api/http";
 import { walletTypeLabels } from "@/lib/labels";
-import { formatCurrency } from "@/lib/format";
 import type { WalletFormValues } from "@/lib/validation/wallets";
 import { useToast } from "@/providers/toast-provider";
 import type { Wallet, WalletType } from "@/types/api";
@@ -166,7 +166,12 @@ export default function WalletsPage() {
             <div className="rounded-lg border border-border bg-card p-4 shadow-soft">
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Total balance</p>
-                <p className="number-tabular text-2xl font-bold text-foreground">{formatCurrency(totalBalance)}</p>
+                <SensitiveValue
+                  as="p"
+                  className="number-tabular text-2xl font-bold text-foreground"
+                  format="currency"
+                  value={totalBalance}
+                />
               </div>
               <p className="mt-3 text-xs text-muted-foreground">{wallets.length} wallet{wallets.length === 1 ? "" : "s"} connected</p>
             </div>
@@ -205,9 +210,16 @@ export default function WalletsPage() {
                 </div>
                 <div className="mt-5 space-y-1">
                   <p className="text-sm text-muted-foreground">Current balance</p>
-                  <p className="number-tabular text-2xl font-bold text-foreground">{formatCurrency(wallet.currentBalance)}</p>
+                  <SensitiveValue
+                    as="p"
+                    className="number-tabular text-2xl font-bold text-foreground"
+                    format="currency"
+                    value={wallet.currentBalance}
+                  />
                 </div>
-                <p className="mt-3 text-xs text-muted-foreground">Initial balance {formatCurrency(wallet.initialBalance)}</p>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Initial balance <SensitiveValue format="currency" value={wallet.initialBalance} />
+                </p>
               </article>
             ))}
           </section>

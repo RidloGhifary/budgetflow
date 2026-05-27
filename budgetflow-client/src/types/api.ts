@@ -6,6 +6,84 @@ export interface User {
   updatedAt: string;
 }
 
+export interface UserPreferences {
+  privacyModeEnabled: boolean;
+  updatedAt: string;
+}
+
+export interface SecuritySession {
+  id: string;
+  browser: string;
+  operatingSystem: string;
+  deviceType: string;
+  deviceName: string;
+  ipAddress: string;
+  createdAt: string;
+  lastActiveAt: string;
+  isCurrent: boolean;
+}
+
+export interface TwoFactorStatus {
+  enabled: boolean;
+  enabledAt?: string | null;
+  pendingSetup: boolean;
+  recoveryCodesRemaining: number;
+}
+
+export interface TwoFactorSetup {
+  manualKey: string;
+  otpAuthUrl: string;
+  qrCodeDataUrl: string;
+}
+
+export interface LoginHistoryItem {
+  id: string;
+  browser: string;
+  createdAt: string;
+  deviceType: string;
+  failureReason?: string | null;
+  ipAddress: string;
+  method: "PASSWORD" | "TOTP" | "RECOVERY_CODE" | string;
+  operatingSystem: string;
+  recoveryCodeUsed: boolean;
+  sessionId?: string | null;
+  status: "SUCCESS" | "FAILURE" | string;
+  twoFactorPassed: boolean;
+  twoFactorRequired: boolean;
+}
+
+export type NotificationCategory =
+  | "FINANCE"
+  | "BUDGET"
+  | "TRANSACTION"
+  | "RECURRING_TRANSACTION"
+  | "SECURITY"
+  | "PRIVACY"
+  | "SYSTEM";
+
+export type NotificationSeverity = "INFO" | "SUCCESS" | "WARNING" | "CRITICAL";
+
+export type NotificationStatus = "UNREAD" | "READ" | "ARCHIVED";
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: string;
+  category: NotificationCategory;
+  severity: NotificationSeverity;
+  title: string;
+  message: string;
+  status: NotificationStatus;
+  actionUrl?: string | null;
+  entityType?: string | null;
+  entityId?: string | null;
+  metadata?: Record<string, unknown> | null;
+  readAt?: string | null;
+  archivedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type BackgroundJobStatus = "PENDING" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
 
 export type DataExportStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "EXPIRED" | "CANCELLED";
@@ -44,6 +122,115 @@ export interface DataExport {
   job?: DataExportJobSummary | null;
 }
 
+export type DataImportStatus =
+  | "UPLOADED"
+  | "PARSING"
+  | "AWAITING_CONFIRMATION"
+  | "PROCESSING"
+  | "COMPLETED"
+  | "COMPLETED_WITH_ERRORS"
+  | "FAILED"
+  | "CANCELLED";
+
+export type DataImportRowStatus = "VALID" | "INVALID" | "DUPLICATE" | "IMPORTED" | "SKIPPED" | "FAILED";
+
+export type DataImportFormat = "CSV" | "XLSX";
+
+export type DataImportType = "TRANSACTIONS";
+
+export interface DataImportJobSummary {
+  status: BackgroundJobStatus;
+  progress: number;
+  attempts: number;
+  maxAttempts: number;
+}
+
+export interface DataImport {
+  id: string;
+  userId: string;
+  importType: DataImportType;
+  format: DataImportFormat;
+  status: DataImportStatus;
+  originalFileName: string;
+  fileSize: number;
+  mimeType?: string | null;
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  importedRows: number;
+  skippedRows: number;
+  duplicateRows: number;
+  failedRows: number;
+  errorMessage?: string | null;
+  mapping?: Record<string, unknown> | null;
+  options?: Record<string, unknown> | null;
+  summary?: Record<string, unknown> | null;
+  requestedAt: string;
+  parsedAt?: string | null;
+  confirmedAt?: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  failedAt?: string | null;
+  cancelledAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  job?: DataImportJobSummary | null;
+}
+
+export interface DataImportRow {
+  id: string;
+  importId: string;
+  rowNumber: number;
+  rawData: Record<string, unknown>;
+  normalizedData?: Record<string, unknown> | null;
+  validationStatus: DataImportRowStatus;
+  validationErrors?: unknown[] | null;
+  duplicateKey?: string | null;
+  matchedWalletId?: string | null;
+  matchedCategoryId?: string | null;
+  createdTransactionId?: string | null;
+  skippedReason?: string | null;
+  importedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AuditLogResult = "SUCCESS" | "FAILURE" | "DENIED";
+
+export type AuditLogSeverity = "INFO" | "WARNING" | "CRITICAL";
+
+export interface AuditLogSummary {
+  id: string;
+  action: string;
+  entityType?: string | null;
+  entityId?: string | null;
+  result: AuditLogResult;
+  severity: AuditLogSeverity;
+  ipAddress?: string | null;
+  browser?: string | null;
+  operatingSystem?: string | null;
+  deviceType?: string | null;
+  sessionId?: string | null;
+  createdAt: string;
+}
+
+export interface AuditLogDetail extends AuditLogSummary {
+  userAgent?: string | null;
+  requestId?: string | null;
+  correlationId?: string | null;
+  beforeSnapshot?: Record<string, unknown> | null;
+  afterSnapshot?: Record<string, unknown> | null;
+  metadata?: Record<string, unknown> | null;
+  errorMessage?: string | null;
+}
+
+export interface PaginationMeta {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
+
 export type WalletType = "CASH" | "BANK" | "EWALLET" | "CREDIT_CARD" | "OTHER";
 
 export interface Wallet {
@@ -74,6 +261,12 @@ export type TransactionType = "INCOME" | "EXPENSE";
 
 export type TransactionPurpose = "NORMAL" | "DEBT_PAYMENT" | "DEBT_COLLECTION" | "SAVING_CONTRIBUTION";
 
+export type RecurringTransactionFrequency = "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
+
+export type RecurringTransactionStatus = "ACTIVE" | "PAUSED" | "COMPLETED" | "CANCELLED";
+
+export type RecurringTransactionOccurrenceStatus = "GENERATED" | "FAILED";
+
 export interface TransactionWalletSummary {
   id: string;
   name: string;
@@ -94,6 +287,7 @@ export interface Transaction {
   userId: string;
   walletId: string;
   categoryId: string;
+  recurringTransactionId?: string | null;
   type: TransactionType;
   purpose: TransactionPurpose;
   amount: number;
@@ -103,6 +297,87 @@ export interface Transaction {
   updatedAt: string;
   wallet?: TransactionWalletSummary;
   category?: TransactionCategorySummary;
+}
+
+export interface RecurringTransaction {
+  id: string;
+  userId: string;
+  walletId: string;
+  categoryId: string;
+  name: string;
+  note?: string | null;
+  type: TransactionType;
+  amount: number;
+  frequency: RecurringTransactionFrequency;
+  interval: number;
+  startDate: string;
+  endDate?: string | null;
+  nextRunDate?: string | null;
+  lastRunDate?: string | null;
+  status: RecurringTransactionStatus;
+  autoGenerate: boolean;
+  totalGeneratedCount: number;
+  cancelledAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  wallet: TransactionWalletSummary;
+  category: TransactionCategorySummary;
+}
+
+export interface RecurringGeneratedTransaction {
+  id: string;
+  scheduledForDate: string;
+  generatedAt: string;
+  status: RecurringTransactionOccurrenceStatus;
+  errorMessage?: string | null;
+  transaction: Transaction;
+}
+
+export interface RecurringTransactionDetail extends RecurringTransaction {
+  recentGeneratedTransactions: RecurringGeneratedTransaction[];
+}
+
+export interface CalendarDaySummary {
+  date: string;
+  incomeTotal: number;
+  expenseTotal: number;
+  netTotal: number;
+  transactionCount: number;
+  incomeCount: number;
+  expenseCount: number;
+  recurringUpcomingCount: number;
+  hasActivity: boolean;
+}
+
+export interface CalendarRecurringPreview {
+  id: string;
+  recurringTransactionId: string;
+  walletId: string;
+  categoryId: string;
+  name: string;
+  note?: string | null;
+  type: TransactionType;
+  amount: number;
+  frequency: RecurringTransactionFrequency;
+  interval: number;
+  scheduledDate: string;
+  status: RecurringTransactionStatus;
+  wallet: TransactionWalletSummary;
+  category: TransactionCategorySummary;
+}
+
+export interface CalendarSummary {
+  startDate: string;
+  endDate: string;
+  days: CalendarDaySummary[];
+}
+
+export interface CalendarDayDetail {
+  date: string;
+  summary: CalendarDaySummary;
+  transactions: Transaction[];
+  upcomingRecurringTransactions: CalendarRecurringPreview[];
+  pagination: PaginationMeta;
 }
 
 export type DebtType = "I_OWE" | "OWED_TO_ME";
@@ -320,13 +595,6 @@ export interface DashboardSummary {
   incomeVsExpense: DashboardMonthlyFlow[];
   expenseByCategory: DashboardExpenseCategory[];
   overBudgetCategories: DashboardOverBudgetCategory[];
-}
-
-export interface PaginationMeta {
-  page: number;
-  pageSize: number;
-  totalItems: number;
-  totalPages: number;
 }
 
 export type FinancialHealthStatus = "not_enough_data" | "excellent" | "good" | "fair" | "needs_attention" | "critical";

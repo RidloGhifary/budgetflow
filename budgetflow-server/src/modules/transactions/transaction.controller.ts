@@ -1,6 +1,7 @@
 import { asyncHandler } from "../../utils/async-handler";
 import { getAuthenticatedUserId } from "../../utils/auth-context";
 import { sendSuccess } from "../../utils/api-response";
+import { getAuditRequestContext } from "../audit-logs/audit-log.context";
 import {
   createUserTransaction,
   deleteUserTransaction,
@@ -26,7 +27,7 @@ export const getTransactions = asyncHandler(async (req, res) => {
 
 export const createTransaction = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  const transaction = await createUserTransaction(userId, req.body as CreateTransactionInput);
+  const transaction = await createUserTransaction(userId, req.body as CreateTransactionInput, getAuditRequestContext(req));
 
   return sendSuccess(res, {
     statusCode: 201,
@@ -47,7 +48,7 @@ export const getTransaction = asyncHandler(async (req, res) => {
 
 export const updateTransaction = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  const transaction = await updateUserTransaction(userId, req.params.id, req.body as UpdateTransactionInput);
+  const transaction = await updateUserTransaction(userId, req.params.id, req.body as UpdateTransactionInput, getAuditRequestContext(req));
 
   return sendSuccess(res, {
     message: "Transaction updated",
@@ -57,7 +58,7 @@ export const updateTransaction = asyncHandler(async (req, res) => {
 
 export const deleteTransaction = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  await deleteUserTransaction(userId, req.params.id);
+  await deleteUserTransaction(userId, req.params.id, getAuditRequestContext(req));
 
   return sendSuccess(res, {
     message: "Transaction deleted",

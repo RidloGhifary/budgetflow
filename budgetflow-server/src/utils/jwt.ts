@@ -5,10 +5,11 @@ import { UnauthorizedError } from "./app-error";
 
 interface AuthTokenPayload {
   sub: string;
+  sid?: string;
 }
 
-export function signAuthToken(userId: string) {
-  return jwt.sign({ sub: userId }, env.jwtSecret, {
+export function signAuthToken(userId: string, sessionId?: string) {
+  return jwt.sign({ sub: userId, ...(sessionId ? { sid: sessionId } : {}) }, env.jwtSecret, {
     expiresIn: env.jwtExpiresIn as jwt.SignOptions["expiresIn"]
   });
 }
@@ -21,7 +22,10 @@ export function verifyAuthToken(token: string): AuthTokenPayload {
       throw new UnauthorizedError("Invalid authentication token");
     }
 
-    return { sub: payload.sub };
+    return {
+      sub: payload.sub,
+      sid: typeof payload.sid === "string" ? payload.sid : undefined
+    };
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       throw error;

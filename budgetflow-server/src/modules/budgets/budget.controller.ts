@@ -1,6 +1,7 @@
 import { asyncHandler } from "../../utils/async-handler";
 import { getAuthenticatedUserId } from "../../utils/auth-context";
 import { sendSuccess } from "../../utils/api-response";
+import { getAuditRequestContext } from "../audit-logs/audit-log.context";
 import {
   createUserBudget,
   deleteUserBudget,
@@ -28,7 +29,7 @@ export const getBudgets = asyncHandler(async (req, res) => {
 
 export const createBudget = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  const budget = await createUserBudget(userId, req.body as CreateBudgetInput);
+  const budget = await createUserBudget(userId, req.body as CreateBudgetInput, getAuditRequestContext(req));
 
   return sendSuccess(res, {
     statusCode: 201,
@@ -49,7 +50,7 @@ export const getBudget = asyncHandler(async (req, res) => {
 
 export const updateBudget = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  const budget = await updateUserBudget(userId, req.params.id, req.body as UpdateBudgetInput);
+  const budget = await updateUserBudget(userId, req.params.id, req.body as UpdateBudgetInput, getAuditRequestContext(req));
 
   return sendSuccess(res, {
     message: "Budget updated",
@@ -59,7 +60,7 @@ export const updateBudget = asyncHandler(async (req, res) => {
 
 export const deleteBudget = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  await deleteUserBudget(userId, req.params.id);
+  await deleteUserBudget(userId, req.params.id, getAuditRequestContext(req));
 
   return sendSuccess(res, {
     message: "Budget deleted",

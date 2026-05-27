@@ -2,12 +2,21 @@ import type { Category, TransactionPurpose, TransactionType } from "@prisma/clie
 
 import { prisma } from "../../lib/prisma";
 import { BadRequestError, ConflictError, NotFoundError } from "../../utils/app-error";
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from "../audit-logs/audit-log.constants";
+import type { AuditRequestContext } from "../audit-logs/audit-log.context";
+import { recordAuditLogSafely } from "../audit-logs/audit-log.service";
+import { getChangedFields } from "../audit-logs/audit-log.sanitizer";
+import {
+  evaluateSmartNotificationsForTransactionSafely,
+  evaluateSmartPeriodNotificationsForUserSafely
+} from "../smart-notifications/smart-notification.service";
 import {
   createTransaction,
   deleteTransaction,
   findDebtPaymentByTransactionId,
   findOwnedCategory,
   findOwnedWallet,
+  findRecurringOccurrenceByTransactionId,
   findSavingContributionByTransactionId,
   findTransactionById,
   findTransactions,
@@ -21,6 +30,10 @@ import type {
   TransactionQueryInput,
   UpdateTransactionInput
 } from "./transaction.validators";
+
+export type CreateTransactionServiceInput = CreateTransactionInput & {
+  recurringTransactionId?: string | null;
+};
 
 export async function listTransactions(userId: string, filters: TransactionQueryInput) {
   const transactions = await findTransactions(userId, filters);
@@ -38,11 +51,24 @@ export async function getUserTransaction(userId: string, id: string) {
   return toTransactionResponse(transaction);
 }
 
-export async function createUserTransaction(userId: string, input: CreateTransactionInput) {
-  return prisma.$transaction((tx) => createUserTransactionInTransaction(userId, input, tx));
+export async function createUserTransaction(userId: string, input: CreateTransactionInput, context?: AuditRequestContext) {
+  const transaction = await prisma.$transaction((tx) => createUserTransactionInTransaction(userId, input, tx));
+
+  await recordAuditLogSafely({
+    action: AUDIT_ACTIONS.TRANSACTION_CREATED,
+    afterSnapshot: transactionSnapshot(transaction),
+    context,
+    entityId: transaction.id,
+    entityType: AUDIT_ENTITY_TYPES.TRANSACTION,
+    userId
+  });
+
+  await evaluateSmartNotificationsForTransactionSafely(userId, transaction);
+
+  return transaction;
 }
 
-export async function createUserTransactionInTransaction(userId: string, input: CreateTransactionInput, tx: DbClient) {
+export async function createUserTransactionInTransaction(userId: string, input: CreateTransactionServiceInput, tx: DbClient) {
   const wallet = await getOwnedWalletOrThrow(userId, input.walletId, tx);
   const category = await getOwnedCategoryOrThrow(userId, input.categoryId, tx);
 
@@ -66,6 +92,7 @@ export async function createUserTransactionInTransaction(userId: string, input: 
       userId,
       walletId: wallet.id,
       categoryId: category.id,
+      recurringTransactionId: input.recurringTransactionId,
       type: input.type,
       purpose: input.purpose,
       amount: input.amount,
@@ -78,8 +105,8 @@ export async function createUserTransactionInTransaction(userId: string, input: 
   return toTransactionResponse(transaction);
 }
 
-export async function updateUserTransaction(userId: string, id: string, input: UpdateTransactionInput) {
-  return prisma.$transaction(async (tx) => {
+export async function updateUserTransaction(userId: string, id: string, input: UpdateTransactionInput, context?: AuditRequestContext) {
+  const result = await prisma.$transaction(async (tx) => {
     const existingTransaction = await findTransactionById(userId, id, tx);
 
     if (!existingTransaction) {
@@ -137,12 +164,34 @@ export async function updateUserTransaction(userId: string, id: string, input: U
       tx
     );
 
-    return toTransactionResponse(updatedTransaction);
+    return {
+      beforeSnapshot: transactionSnapshot(toTransactionResponse(existingTransaction)),
+      transaction: toTransactionResponse(updatedTransaction)
+    };
   });
+
+  const afterSnapshot = transactionSnapshot(result.transaction);
+
+  await recordAuditLogSafely({
+    action: AUDIT_ACTIONS.TRANSACTION_UPDATED,
+    afterSnapshot,
+    beforeSnapshot: result.beforeSnapshot,
+    context,
+    entityId: id,
+    entityType: AUDIT_ENTITY_TYPES.TRANSACTION,
+    metadata: {
+      changedFields: getChangedFields(result.beforeSnapshot, afterSnapshot)
+    },
+    userId
+  });
+
+  await evaluateSmartNotificationsForTransactionSafely(userId, result.transaction);
+
+  return result.transaction;
 }
 
-export async function deleteUserTransaction(userId: string, id: string) {
-  await prisma.$transaction(async (tx) => {
+export async function deleteUserTransaction(userId: string, id: string, context?: AuditRequestContext) {
+  const beforeSnapshot = await prisma.$transaction(async (tx) => {
     const existingTransaction = await findTransactionById(userId, id, tx);
 
     if (!existingTransaction) {
@@ -161,7 +210,20 @@ export async function deleteUserTransaction(userId: string, id: string) {
     });
 
     await deleteTransaction(existingTransaction.id, tx);
+
+    return transactionSnapshot(toTransactionResponse(existingTransaction));
   });
+
+  await recordAuditLogSafely({
+    action: AUDIT_ACTIONS.TRANSACTION_DELETED,
+    beforeSnapshot,
+    context,
+    entityId: id,
+    entityType: AUDIT_ENTITY_TYPES.TRANSACTION,
+    userId
+  });
+
+  await evaluateSmartPeriodNotificationsForUserSafely(userId, beforeSnapshot.transactionDate);
 }
 
 async function getOwnedWalletOrThrow(userId: string, walletId: string, tx: DbClient) {
@@ -190,9 +252,10 @@ async function assertTransactionIsNotLinkedFinancialRecord(
   tx: DbClient,
   action: "updated" | "deleted"
 ) {
-  const [debtPayment, savingContribution] = await Promise.all([
+  const [debtPayment, savingContribution, recurringOccurrence] = await Promise.all([
     findDebtPaymentByTransactionId(userId, transactionId, tx),
-    findSavingContributionByTransactionId(userId, transactionId, tx)
+    findSavingContributionByTransactionId(userId, transactionId, tx),
+    findRecurringOccurrenceByTransactionId(transactionId, tx)
   ]);
 
   if (debtPayment) {
@@ -201,6 +264,10 @@ async function assertTransactionIsNotLinkedFinancialRecord(
 
   if (savingContribution) {
     throw new ConflictError(`Saving contribution transactions cannot be ${action} directly`);
+  }
+
+  if (recurringOccurrence) {
+    throw new ConflictError(`Recurring generated transactions cannot be ${action} directly`);
   }
 }
 
@@ -273,4 +340,28 @@ function formatPurpose(purpose: TransactionPurpose) {
     .split("_")
     .map((part) => part[0].toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function transactionSnapshot(transaction: {
+  amount: number;
+  categoryId: string;
+  id: string;
+  note?: string | null;
+  purpose: TransactionPurpose;
+  recurringTransactionId?: string | null;
+  transactionDate: Date | string;
+  type: TransactionType;
+  walletId: string;
+}) {
+  return {
+    amount: transaction.amount,
+    categoryId: transaction.categoryId,
+    id: transaction.id,
+    note: transaction.note ?? null,
+    purpose: transaction.purpose,
+    recurringTransactionId: transaction.recurringTransactionId ?? null,
+    transactionDate: transaction.transactionDate,
+    type: transaction.type,
+    walletId: transaction.walletId
+  };
 }

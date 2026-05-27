@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Loader2,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { BudgetForm } from "@/components/budgets/budget-form";
+import { SensitiveText, SensitiveValue } from "@/components/privacy/sensitive-value";
 import { MonthYearSelector, formatMonthYear, getCurrentMonthYear } from "@/components/shared/month-year-selector";
 import { PaginationControls, useClientPagination } from "@/components/shared/pagination";
 import { PageHeader } from "@/components/shared/page-header";
@@ -176,28 +177,28 @@ export default function BudgetsPage() {
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatTile
           label="Total Limit"
-          value={formatCurrency(summary?.totalLimitAmount ?? 0)}
+          value={<SensitiveValue format="currency" value={summary?.totalLimitAmount ?? 0} />}
           helper={`${budgetItems.length || budgets.length} budget${(budgetItems.length || budgets.length) === 1 ? "" : "s"} in this period`}
           icon={WalletCards}
           tone="primary"
         />
         <StatTile
           label="Used"
-          value={formatCurrency(summary?.totalUsedAmount ?? 0)}
-          helper={`${formatPercent(summary?.overallUsagePercentage ?? 0)} of planned spend`}
+          value={<SensitiveValue format="currency" value={summary?.totalUsedAmount ?? 0} />}
+          helper={<SensitiveText text={`${formatPercent(summary?.overallUsagePercentage ?? 0)} of planned spend`} />}
           icon={ReceiptText}
           tone={getBudgetTone(summary?.overallUsagePercentage ?? 0)}
         />
         <StatTile
           label="Remaining"
-          value={formatCurrency(summary?.totalRemainingAmount ?? 0)}
+          value={<SensitiveValue format="currency" value={summary?.totalRemainingAmount ?? 0} />}
           helper="Limit minus matched expenses"
           icon={Scale}
           tone={(summary?.totalRemainingAmount ?? 0) < 0 ? "danger" : "success"}
         />
         <StatTile
           label="Over Budget"
-          value={formatCurrency(overBudgetAmount)}
+          value={<SensitiveValue format="currency" value={overBudgetAmount} />}
           helper={`${summary?.overBudgetCount ?? 0} categor${(summary?.overBudgetCount ?? 0) === 1 ? "y" : "ies"} need attention`}
           icon={AlertTriangle}
           tone={(summary?.overBudgetCount ?? 0) > 0 ? "danger" : "blue"}
@@ -320,25 +321,25 @@ function BudgetCard({ budget, deletingId, onDelete, onEdit }: BudgetCardProps) {
       </div>
       <div className="mt-5 space-y-4">
         <div className="grid gap-3 text-sm sm:grid-cols-3">
-          <BudgetAmount label="Limit" value={formatCurrency(budget.limitAmount)} />
-          <BudgetAmount label="Used" value={formatCurrency(budget.usedAmount)} />
+          <BudgetAmount label="Limit" value={<SensitiveValue format="currency" value={budget.limitAmount} />} />
+          <BudgetAmount label="Used" value={<SensitiveValue format="currency" value={budget.usedAmount} />} />
           <BudgetAmount
             label={budget.overAmount > 0 ? "Over" : "Remaining"}
-            value={formatCurrency(budget.overAmount > 0 ? budget.overAmount : budget.remainingAmount)}
+            value={<SensitiveValue format="currency" value={budget.overAmount > 0 ? budget.overAmount : budget.remainingAmount} />}
             tone={budget.overAmount > 0 ? "danger" : "default"}
           />
         </div>
         <ProgressIndicator
           value={progressValue}
           tone={tone}
-          label={`${formatPercent(budget.usagePercentage)} used of ${formatCurrency(budget.limitAmount)}`}
+          label={<SensitiveText text={`${formatPercent(budget.usagePercentage)} used of ${formatCurrency(budget.limitAmount)}`} />}
         />
       </div>
     </div>
   );
 }
 
-function BudgetAmount({ label, tone = "default", value }: { label: string; tone?: "default" | "danger"; value: string }) {
+function BudgetAmount({ label, tone = "default", value }: { label: string; tone?: "default" | "danger"; value: ReactNode }) {
   return (
     <div className="rounded-md bg-muted/40 p-3">
       <p className="text-xs text-muted-foreground">{label}</p>

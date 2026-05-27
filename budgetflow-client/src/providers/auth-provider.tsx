@@ -2,7 +2,7 @@
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import { authApi, type LoginInput, type RegisterInput } from "@/lib/api/auth.api";
+import { authApi, type LoginInput, type LoginResponseData, type RegisterInput } from "@/lib/api/auth.api";
 import { ApiError, getFriendlyApiError } from "@/lib/api/http";
 import type { User } from "@/types/api";
 
@@ -12,7 +12,9 @@ interface AuthContextValue {
   isLoading: boolean;
   errorMessage: string | null;
   refreshUser: () => Promise<User | null>;
-  login: (input: LoginInput) => Promise<User>;
+  login: (input: LoginInput) => Promise<LoginResponseData>;
+  useRecoveryCode: (input: { challengeId: string; challengeToken: string; recoveryCode: string }) => Promise<User>;
+  verifyTwoFactor: (input: { challengeId: string; challengeToken: string; code: string }) => Promise<User>;
   register: (input: RegisterInput) => Promise<User>;
   logout: () => Promise<void>;
 }
@@ -52,6 +54,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (input: LoginInput) => {
     const response = await authApi.login(input);
+    setErrorMessage(null);
+
+    if ("user" in response.data) {
+      setUser(response.data.user);
+    }
+
+    return response.data;
+  }, []);
+
+  const verifyTwoFactor = useCallback(async (input: { challengeId: string; challengeToken: string; code: string }) => {
+    const response = await authApi.verifyTwoFactor(input);
+    setUser(response.data.user);
+    setErrorMessage(null);
+    return response.data.user;
+  }, []);
+
+  const useRecoveryCode = useCallback(async (input: { challengeId: string; challengeToken: string; recoveryCode: string }) => {
+    const response = await authApi.useRecoveryCode(input);
     setUser(response.data.user);
     setErrorMessage(null);
     return response.data.user;
@@ -81,10 +101,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       errorMessage,
       refreshUser,
       login,
+      useRecoveryCode,
+      verifyTwoFactor,
       register,
       logout
     }),
-    [errorMessage, isLoading, login, logout, refreshUser, register, user]
+    [errorMessage, isLoading, login, logout, refreshUser, register, useRecoveryCode, user, verifyTwoFactor]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

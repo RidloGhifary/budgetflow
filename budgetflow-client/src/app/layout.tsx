@@ -1,6 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 
+import { PWARegister } from "@/components/pwa/pwa-register";
+import { getThemeInitScript } from "@/lib/theme";
 import { AppProviders } from "@/providers/app-providers";
 
 const appDescription =
@@ -9,6 +12,11 @@ const metadataBase = new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhos
 
 export const metadata: Metadata = {
   applicationName: "BudgetFlow",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "BudgetFlow"
+  },
   authors: [{ name: "BudgetFlow" }],
   creator: "BudgetFlow",
   description: appDescription,
@@ -27,6 +35,7 @@ export const metadata: Metadata = {
     "debt tracker",
     "BudgetFlow"
   ],
+  manifest: "/manifest.webmanifest",
   metadataBase,
   openGraph: {
     description: appDescription,
@@ -54,15 +63,21 @@ export const metadata: Metadata = {
   }
 };
 
+export const viewport: Viewport = {
+  themeColor: "#0B1512"
+};
+
 export default function RootLayout({
   children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html className="dark" lang="en" suppressHydrationWarning>
       <body>
+        <Script id="budgetflow-theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: getThemeInitScript() }} />
         <AppProviders>{children}</AppProviders>
+        <PWARegister />
       </body>
     </html>
   );

@@ -26,14 +26,14 @@ interface ToastContextValue {
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const toastStyles: Record<ToastVariant, string> = {
-  success: "border-emerald-200 bg-white text-emerald-950",
-  error: "border-red-200 bg-white text-red-950",
-  info: "border-border bg-white text-foreground"
+  success: "border-emerald-500/35 bg-card text-emerald-100",
+  error: "border-red-500/35 bg-card text-red-100",
+  info: "border-border bg-card text-foreground"
 };
 
 const toastIconStyles: Record<ToastVariant, string> = {
-  success: "text-emerald-600",
-  error: "text-red-600",
+  success: "text-emerald-300",
+  error: "text-red-300",
   info: "text-primary"
 };
 

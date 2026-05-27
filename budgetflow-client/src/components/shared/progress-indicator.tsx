@@ -1,9 +1,11 @@
+import type { ReactNode } from "react";
+
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 interface ProgressIndicatorProps {
   value: number;
-  label?: string;
+  label?: ReactNode;
   tone?: "primary" | "success" | "warning" | "danger";
 }
 

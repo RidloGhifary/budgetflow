@@ -48,7 +48,7 @@ export default function RegisterPage() {
 
   return (
     <PublicAuthRedirect>
-      <main className="min-h-screen bg-[#F8FAF9] px-4 py-8">
+      <main className="min-h-screen bg-background px-4 py-8">
         <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-8 lg:grid-cols-[1fr_440px]">
           <section className="hidden lg:block">
             <div className="max-w-xl">
@@ -155,7 +155,7 @@ export default function RegisterPage() {
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link className="font-semibold text-primary hover:text-[#005F4F]" href="/login">
+              <Link className="font-semibold text-primary hover:text-primary/80" href="/login">
                 Login
               </Link>
             </p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CalendarClock,
@@ -17,6 +17,7 @@ import {
 import { DebtFilters } from "@/components/debts/debt-filters";
 import { DebtForm } from "@/components/debts/debt-form";
 import { DebtPaymentForm } from "@/components/debts/debt-payment-form";
+import { SensitiveText, SensitiveValue } from "@/components/privacy/sensitive-value";
 import { PaginationControls, useClientPagination } from "@/components/shared/pagination";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProgressIndicator } from "@/components/shared/progress-indicator";
@@ -257,14 +258,14 @@ export default function DebtsPage() {
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatTile
           label="Total I Owe"
-          value={formatCurrency(summary?.totalIOweRemainingAmount ?? 0)}
+          value={<SensitiveValue format="currency" value={summary?.totalIOweRemainingAmount ?? 0} />}
           helper={`${summary?.unpaidDebtCount ?? 0} unpaid, ${summary?.partialDebtCount ?? 0} partial`}
           icon={CreditCard}
           tone="danger"
         />
         <StatTile
           label="Total Owed To Me"
-          value={formatCurrency(summary?.totalOwedToMeRemainingAmount ?? 0)}
+          value={<SensitiveValue format="currency" value={summary?.totalOwedToMeRemainingAmount ?? 0} />}
           helper={`${summary?.paidDebtCount ?? 0} paid debts recorded`}
           icon={HandCoins}
           tone="success"
@@ -302,8 +303,11 @@ export default function DebtsPage() {
       {paymentDebt ? (
         <SectionCard
           title={paymentDebt.type === "I_OWE" ? "Record Debt Payment" : "Record Debt Collection"}
-          description={`${formatCurrency(paymentDebt.remainingAmount)} remaining for ${paymentDebt.title}.`}
+          description=""
         >
+          <p className="mb-4 text-sm text-muted-foreground">
+            <SensitiveValue format="currency" value={paymentDebt.remainingAmount} /> remaining for {paymentDebt.title}.
+          </p>
           <div className="space-y-4">
             {paymentError ? (
               <div className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">{paymentError}</div>
@@ -478,13 +482,13 @@ function DebtCard({
       </div>
 
       <div className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
-        <DebtAmount label="Total" value={formatCurrency(debt.totalAmount)} />
-        <DebtAmount label="Paid" value={formatCurrency(debt.paidAmount)} />
-        <DebtAmount label="Remaining" value={formatCurrency(debt.remainingAmount)} tone={debt.remainingAmount > 0 ? "default" : "success"} />
+        <DebtAmount label="Total" value={<SensitiveValue format="currency" value={debt.totalAmount} />} />
+        <DebtAmount label="Paid" value={<SensitiveValue format="currency" value={debt.paidAmount} />} />
+        <DebtAmount label="Remaining" value={<SensitiveValue format="currency" value={debt.remainingAmount} />} tone={debt.remainingAmount > 0 ? "default" : "success"} />
       </div>
 
       <div className="mt-5">
-        <ProgressIndicator value={progress} tone={tone} label={`${formatPercent(progress)} paid toward ${formatCurrency(debt.totalAmount)}`} />
+        <ProgressIndicator value={progress} tone={tone} label={<SensitiveText text={`${formatPercent(progress)} paid toward ${formatCurrency(debt.totalAmount)}`} />} />
       </div>
 
       {debt.note ? <p className="mt-4 rounded-md bg-muted/40 px-3 py-2 text-sm text-muted-foreground">{debt.note}</p> : null}
@@ -509,7 +513,7 @@ function DebtCard({
   );
 }
 
-function DebtAmount({ label, tone = "default", value }: { label: string; tone?: "default" | "success"; value: string }) {
+function DebtAmount({ label, tone = "default", value }: { label: string; tone?: "default" | "success"; value: ReactNode }) {
   return (
     <div className="rounded-md bg-muted/40 p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
@@ -563,7 +567,9 @@ function PaymentHistory({
       {payments.map((payment) => (
         <div key={payment.id} className="flex items-center justify-between gap-3 py-3">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground">{formatCurrency(payment.amount)}</p>
+            <p className="text-sm font-medium text-foreground">
+              <SensitiveValue format="currency" value={payment.amount} />
+            </p>
             <p className="truncate text-xs text-muted-foreground">
               {formatDate(payment.paymentDate)} - {payment.transaction.wallet.name} - {payment.transaction.category.name}
             </p>

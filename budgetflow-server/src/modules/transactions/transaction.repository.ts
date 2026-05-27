@@ -33,6 +33,7 @@ interface CreateTransactionData {
   userId: string;
   walletId: string;
   categoryId: string;
+  recurringTransactionId?: string | null;
   type: TransactionType;
   purpose: TransactionPurpose;
   amount: number;
@@ -92,6 +93,17 @@ export function findSavingContributionByTransactionId(userId: string, transactio
   });
 }
 
+export function findRecurringOccurrenceByTransactionId(transactionId: string, client: DbClient = prisma) {
+  return client.recurringTransactionOccurrence.findUnique({
+    where: {
+      transactionId
+    },
+    select: {
+      id: true
+    }
+  });
+}
+
 export function findOwnedWallet(userId: string, walletId: string, client: DbClient = prisma): Promise<Wallet | null> {
   return client.wallet.findFirst({
     where: {
@@ -116,6 +128,7 @@ export function createTransaction(data: CreateTransactionData, client: DbClient 
       userId: data.userId,
       walletId: data.walletId,
       categoryId: data.categoryId,
+      recurringTransactionId: data.recurringTransactionId,
       type: data.type,
       purpose: data.purpose,
       amount: data.amount,

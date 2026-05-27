@@ -1,0 +1,2 @@
+-- RenameIndex
+ALTER INDEX "recurring_transaction_occurrences_recurringTransactionId_schedu" RENAME TO "recurring_transaction_occurrences_recurringTransactionId_sc_key";

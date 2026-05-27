@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { positiveNumberInput } from "@/lib/validation/numbers";
+
 export const transactionTypeValues = ["INCOME", "EXPENSE"] as const;
 export const transactionPurposeValues = ["NORMAL", "DEBT_PAYMENT", "DEBT_COLLECTION", "SAVING_CONTRIBUTION"] as const;
 
@@ -9,7 +11,7 @@ export const transactionSchema = z
     categoryId: z.string().min(1, "Category is required."),
     type: z.enum(transactionTypeValues),
     purpose: z.enum(transactionPurposeValues),
-    amount: z.coerce.number().finite("Amount must be a valid number.").positive("Amount must be greater than zero."),
+    amount: positiveNumberInput("Amount"),
     transactionDate: z
       .string()
       .min(1, "Transaction date is required.")

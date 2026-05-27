@@ -5,6 +5,7 @@ Local Docker Compose setup for the full BudgetFlow V1 stack:
 - Client: Next.js on `http://localhost:3000`
 - Server: Express API on `http://localhost:4000`
 - PostgreSQL: exposed on `localhost:5432`
+- Worker: background jobs in a separate `worker` service
 
 ## Prerequisites
 
@@ -28,6 +29,7 @@ docker compose up --build
 docker compose down
 docker compose logs -f client
 docker compose logs -f server
+docker compose logs -f worker
 docker compose logs -f postgres
 ```
 

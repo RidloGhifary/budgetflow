@@ -1,6 +1,7 @@
 import { asyncHandler } from "../../utils/async-handler";
 import { getAuthenticatedUserId } from "../../utils/auth-context";
 import { sendSuccess } from "../../utils/api-response";
+import { getAuditRequestContext } from "../audit-logs/audit-log.context";
 import {
   createUserWallet,
   deleteUserWallet,
@@ -22,7 +23,7 @@ export const getWallets = asyncHandler(async (req, res) => {
 
 export const createWallet = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  const wallet = await createUserWallet(userId, req.body as CreateWalletInput);
+  const wallet = await createUserWallet(userId, req.body as CreateWalletInput, getAuditRequestContext(req));
 
   return sendSuccess(res, {
     statusCode: 201,
@@ -43,7 +44,7 @@ export const getWallet = asyncHandler(async (req, res) => {
 
 export const updateWallet = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  const wallet = await updateUserWallet(userId, req.params.id, req.body as UpdateWalletInput);
+  const wallet = await updateUserWallet(userId, req.params.id, req.body as UpdateWalletInput, getAuditRequestContext(req));
 
   return sendSuccess(res, {
     message: "Wallet updated",
@@ -53,7 +54,7 @@ export const updateWallet = asyncHandler(async (req, res) => {
 
 export const deleteWallet = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  await deleteUserWallet(userId, req.params.id);
+  await deleteUserWallet(userId, req.params.id, getAuditRequestContext(req));
 
   return sendSuccess(res, {
     message: "Wallet deleted",

@@ -14,12 +14,13 @@ import {
 
 import { ProgressIndicator } from "@/components/shared/progress-indicator";
 import { PaginationControls, useClientPagination } from "@/components/shared/pagination";
+import { SensitiveText, SensitiveValue } from "@/components/privacy/sensitive-value";
 import { SectionCard } from "@/components/shared/section-card";
 import { StatTile } from "@/components/shared/stat-tile";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import type { ReportData } from "@/hooks/use-reports";
-import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
+import { formatDate, formatPercent } from "@/lib/format";
 import { debtTypeLabels, transactionPurposeLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import type {
@@ -142,9 +143,9 @@ function BudgetReportPreview({ report }: { report: BudgetReport }) {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatTile helper={`${summary.items.length} budget categories`} icon={ReceiptText} label="Limit" value={formatCurrency(summary.totalLimitAmount)} />
-        <StatTile helper={`${formatPercent(summary.overallUsagePercentage)} overall usage`} icon={CircleDollarSign} label="Used" tone="warning" value={formatCurrency(summary.totalUsedAmount)} />
-        <StatTile helper={`${summary.safeBudgetCount} safe budgets`} icon={WalletCards} label="Remaining" tone="success" value={formatCurrency(summary.totalRemainingAmount)} />
+        <StatTile helper={`${summary.items.length} budget categories`} icon={ReceiptText} label="Limit" value={<CurrencyValue value={summary.totalLimitAmount} />} />
+        <StatTile helper={<SensitiveText text={`${formatPercent(summary.overallUsagePercentage)} overall usage`} />} icon={CircleDollarSign} label="Used" tone="warning" value={<CurrencyValue value={summary.totalUsedAmount} />} />
+        <StatTile helper={`${summary.safeBudgetCount} safe budgets`} icon={WalletCards} label="Remaining" tone="success" value={<CurrencyValue value={summary.totalRemainingAmount} />} />
         <StatTile helper={`${summary.overBudgetCount} over budget`} icon={CreditCard} label="Over Budget" tone={summary.overBudgetCount > 0 ? "danger" : "primary"} value={`${summary.overBudgetCount}`} />
       </section>
       <BudgetItemsSection items={summary.items} title="Budget Report" emptyMessage="No budget data available for this report." />
@@ -164,9 +165,9 @@ function DebtReportPreview({ report }: { report: DebtReport }) {
             { header: "Type", render: (debt) => debtTypeLabels[debt.type] },
             { header: "Title", render: (debt) => debt.title },
             { header: "Person", render: (debt) => debt.personName },
-            { align: "right", header: "Total", render: (debt) => formatCurrency(debt.totalAmount) },
-            { align: "right", header: "Paid", render: (debt) => formatCurrency(debt.paidAmount) },
-            { align: "right", header: "Remaining", render: (debt) => formatCurrency(debt.remainingAmount) },
+            { align: "right", header: "Total", render: (debt) => <CurrencyValue value={debt.totalAmount} /> },
+            { align: "right", header: "Paid", render: (debt) => <CurrencyValue value={debt.paidAmount} /> },
+            { align: "right", header: "Remaining", render: (debt) => <CurrencyValue value={debt.remainingAmount} /> },
             { header: "Due Date", render: (debt) => formatMaybeDate(debt.dueDate) },
             { header: "Status", render: (debt) => <StatusBadge status={debt.status} /> }
           ]}
@@ -188,14 +189,14 @@ function SavingGoalReportPreview({ report }: { report: SavingGoalReport }) {
         <DataTable
           columns={[
             { header: "Goal", render: (goal) => goal.name },
-            { align: "right", header: "Target", render: (goal) => formatCurrency(goal.targetAmount) },
-            { align: "right", header: "Saved", render: (goal) => formatCurrency(goal.currentAmount) },
-            { align: "right", header: "Remaining", render: (goal) => formatCurrency(goal.remainingAmount) },
+            { align: "right", header: "Target", render: (goal) => <CurrencyValue value={goal.targetAmount} /> },
+            { align: "right", header: "Saved", render: (goal) => <CurrencyValue value={goal.currentAmount} /> },
+            { align: "right", header: "Remaining", render: (goal) => <CurrencyValue value={goal.remainingAmount} /> },
             {
               header: "Progress",
               render: (goal) => (
                 <div className="min-w-36">
-                  <ProgressIndicator label={formatPercent(goal.progressPercentage)} value={capPercentage(goal.progressPercentage)} />
+                  <ProgressIndicator label={<SensitiveValue format="percent" value={goal.progressPercentage} />} value={capPercentage(goal.progressPercentage)} />
                 </div>
               )
             },
@@ -217,14 +218,14 @@ function FinancialSummaryCards({ report }: { report: MonthlyReport | RangeReport
 
   return (
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <StatTile helper={`${summary.incomeTransactionCount} income transactions`} icon={ArrowUpCircle} label="Total Income" tone="success" value={formatCurrency(summary.totalIncome)} />
-      <StatTile helper={`${summary.expenseTransactionCount} expense transactions`} icon={ArrowDownCircle} label="Total Expense" tone="danger" value={formatCurrency(summary.totalExpense)} />
-      <StatTile helper={`${summary.transactionCount} total transactions`} icon={CircleDollarSign} label="Net Cash Flow" tone={summary.netCashFlow >= 0 ? "success" : "danger"} value={formatCurrency(summary.netCashFlow)} />
-      <StatTile helper="Current wallet snapshot" icon={WalletCards} label="Available Balance" value={formatCurrency(summary.availableBalance ?? 0)} />
-      <StatTile helper="Normal expense only" icon={ReceiptText} label="Normal Expense" tone="warning" value={formatCurrency(summary.normalExpense)} />
-      <StatTile helper={`${debtPayments.paymentCount} debt payments`} icon={CreditCard} label="Debt Payments" tone="danger" value={formatCurrency(summary.debtPayments)} />
-      <StatTile helper="Income from debt collections" icon={ArrowUpCircle} label="Debt Collections" tone="success" value={formatCurrency(summary.debtCollections)} />
-      <StatTile helper={`${contributions.contributionCount} contributions`} icon={PiggyBank} label="Saving Contributions" tone="blue" value={formatCurrency(summary.savingContributions)} />
+      <StatTile helper={`${summary.incomeTransactionCount} income transactions`} icon={ArrowUpCircle} label="Total Income" tone="success" value={<CurrencyValue value={summary.totalIncome} />} />
+      <StatTile helper={`${summary.expenseTransactionCount} expense transactions`} icon={ArrowDownCircle} label="Total Expense" tone="danger" value={<CurrencyValue value={summary.totalExpense} />} />
+      <StatTile helper={`${summary.transactionCount} total transactions`} icon={CircleDollarSign} label="Net Cash Flow" tone={summary.netCashFlow >= 0 ? "success" : "danger"} value={<CurrencyValue value={summary.netCashFlow} />} />
+      <StatTile helper="Current wallet snapshot" icon={WalletCards} label="Available Balance" value={<CurrencyValue value={summary.availableBalance ?? 0} />} />
+      <StatTile helper="Normal expense only" icon={ReceiptText} label="Normal Expense" tone="warning" value={<CurrencyValue value={summary.normalExpense} />} />
+      <StatTile helper={`${debtPayments.paymentCount} debt payments`} icon={CreditCard} label="Debt Payments" tone="danger" value={<CurrencyValue value={summary.debtPayments} />} />
+      <StatTile helper="Income from debt collections" icon={ArrowUpCircle} label="Debt Collections" tone="success" value={<CurrencyValue value={summary.debtCollections} />} />
+      <StatTile helper={`${contributions.contributionCount} contributions`} icon={PiggyBank} label="Saving Contributions" tone="blue" value={<CurrencyValue value={summary.savingContributions} />} />
     </section>
   );
 }
@@ -251,8 +252,8 @@ function CategoryBreakdown({ rows, title }: { rows: ReportCategoryBreakdownItem[
         columns={[
           { header: "Category", render: (item) => item.categoryName },
           { align: "right", header: "Transactions", render: (item) => item.transactionCount },
-          { align: "right", header: "Total", render: (item) => formatCurrency(item.totalAmount) },
-          { align: "right", header: "Share", render: (item) => formatPercent(item.percentage) }
+          { align: "right", header: "Total", render: (item) => <CurrencyValue value={item.totalAmount} /> },
+          { align: "right", header: "Share", render: (item) => <SensitiveValue format="percent" value={item.percentage} /> }
         ]}
         emptyMessage="No category breakdown is available for this report."
         rows={rows}
@@ -270,14 +271,14 @@ function BudgetItemsSection({ emptyMessage = "No budgets found for this period."
         columns={[
           { header: "Category", render: (item) => item.category.name },
           { header: "Period", render: (item) => `${item.year}-${String(item.month).padStart(2, "0")}` },
-          { align: "right", header: "Limit", render: (item) => formatCurrency(item.limitAmount) },
-          { align: "right", header: "Used", render: (item) => formatCurrency(item.usedAmount) },
-          { align: "right", header: "Remaining", render: (item) => formatCurrency(item.remainingAmount) },
+          { align: "right", header: "Limit", render: (item) => <CurrencyValue value={item.limitAmount} /> },
+          { align: "right", header: "Used", render: (item) => <CurrencyValue value={item.usedAmount} /> },
+          { align: "right", header: "Remaining", render: (item) => <CurrencyValue value={item.remainingAmount} /> },
           {
             header: "Usage",
             render: (item) => (
               <div className="min-w-36">
-                <ProgressIndicator label={formatPercent(item.usagePercentage)} tone={item.status === "OVER_BUDGET" ? "danger" : item.status === "WARNING" ? "warning" : "success"} value={capPercentage(item.usagePercentage)} />
+                <ProgressIndicator label={<SensitiveValue format="percent" value={item.usagePercentage} />} tone={item.status === "OVER_BUDGET" ? "danger" : item.status === "WARNING" ? "warning" : "success"} value={capPercentage(item.usagePercentage)} />
               </div>
             )
           },
@@ -295,8 +296,8 @@ function DebtSummarySection({ summary }: { summary?: DebtSummary }) {
 
   return (
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <StatTile helper={`${safeSummary.unpaidDebtCount} unpaid debts`} icon={CreditCard} label="Total I Owe" tone="danger" value={formatCurrency(safeSummary.totalIOweRemainingAmount)} />
-      <StatTile helper={`${safeSummary.paidDebtCount} paid debts`} icon={CircleDollarSign} label="Owed To Me" tone="success" value={formatCurrency(safeSummary.totalOwedToMeRemainingAmount)} />
+      <StatTile helper={`${safeSummary.unpaidDebtCount} unpaid debts`} icon={CreditCard} label="Total I Owe" tone="danger" value={<CurrencyValue value={safeSummary.totalIOweRemainingAmount} />} />
+      <StatTile helper={`${safeSummary.paidDebtCount} paid debts`} icon={CircleDollarSign} label="Owed To Me" tone="success" value={<CurrencyValue value={safeSummary.totalOwedToMeRemainingAmount} />} />
       <StatTile helper={`${safeSummary.partialDebtCount} partial debts`} icon={ReceiptText} label="Due Soon" tone={safeSummary.dueSoonCount > 0 ? "warning" : "blue"} value={`${safeSummary.dueSoonCount}`} />
       <StatTile helper="Unpaid or partial past due" icon={CreditCard} label="Overdue" tone={safeSummary.overdueCount > 0 ? "danger" : "primary"} value={`${safeSummary.overdueCount}`} />
     </section>
@@ -308,9 +309,9 @@ function SavingGoalSummarySection({ summary }: { summary?: SavingGoalSummary }) 
 
   return (
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <StatTile helper={`${safeSummary.activeGoalsCount} active goals`} icon={Target} label="Total Target" value={formatCurrency(safeSummary.totalTargetAmount)} />
-      <StatTile helper={formatPercent(safeSummary.averageProgressPercentage)} icon={PiggyBank} label="Total Saved" tone="success" value={formatCurrency(safeSummary.totalSavedAmount)} />
-      <StatTile helper={`${safeSummary.completedGoalsCount} completed goals`} icon={WalletCards} label="Remaining" tone="blue" value={formatCurrency(safeSummary.totalRemainingAmount)} />
+      <StatTile helper={`${safeSummary.activeGoalsCount} active goals`} icon={Target} label="Total Target" value={<CurrencyValue value={safeSummary.totalTargetAmount} />} />
+      <StatTile helper={<SensitiveValue format="percent" value={safeSummary.averageProgressPercentage} />} icon={PiggyBank} label="Total Saved" tone="success" value={<CurrencyValue value={safeSummary.totalSavedAmount} />} />
+      <StatTile helper={`${safeSummary.completedGoalsCount} completed goals`} icon={WalletCards} label="Remaining" tone="blue" value={<CurrencyValue value={safeSummary.totalRemainingAmount} />} />
       <StatTile helper={`${safeSummary.dueSoonCount} due soon`} icon={Target} label="Cancelled" tone="warning" value={`${safeSummary.cancelledGoalsCount}`} />
     </section>
   );
@@ -334,7 +335,11 @@ function TransactionTableSection({ rows, title }: { rows?: ReportTransaction[]; 
             header: "Amount",
             render: (transaction) => (
               <span className={transaction.type === "INCOME" ? "text-emerald-700" : "text-red-600"}>
-                {formatCurrency(transaction.type === "EXPENSE" ? -transaction.amount : transaction.amount)}
+                <SensitiveValue
+                  format="currency"
+                  mask={transaction.type === "EXPENSE" ? "-Rp *****" : "Rp *****"}
+                  value={transaction.type === "EXPENSE" ? -transaction.amount : transaction.amount}
+                />
               </span>
             )
           }
@@ -418,6 +423,10 @@ function ReportSkeleton() {
       </SectionCard>
     </div>
   );
+}
+
+function CurrencyValue({ value }: { value: number }) {
+  return <SensitiveValue format="currency" value={value} />;
 }
 
 function formatMaybeDate(value?: string | null) {

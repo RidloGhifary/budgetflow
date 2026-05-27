@@ -6,6 +6,7 @@ export function toTransactionResponse(transaction: TransactionWithRelations) {
     userId: transaction.userId,
     walletId: transaction.walletId,
     categoryId: transaction.categoryId,
+    recurringTransactionId: transaction.recurringTransactionId,
     type: transaction.type,
     purpose: transaction.purpose,
     amount: Number(transaction.amount),

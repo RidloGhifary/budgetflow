@@ -104,7 +104,7 @@ export function FinancialHealthCard({
   const hasEnoughData = financialHealth?.metadata.hasEnoughData ?? false;
   const components = financialHealth?.components.length ? financialHealth.components : unavailableComponents;
   const topInsights = financialHealth?.insights.slice(0, 3) ?? [];
-  const summary = hasEnoughData ? financialHealth?.summary : (financialHealth?.summary ?? emptySummary);
+  const summary = financialHealth?.summary ?? emptySummary;
 
   return (
     <SectionCard

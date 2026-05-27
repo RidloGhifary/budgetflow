@@ -49,13 +49,131 @@ enum SavingGoalStatus {
   CANCELLED
 }
 
+enum RecurringTransactionFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum RecurringTransactionStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum RecurringTransactionOccurrenceStatus {
+  GENERATED
+  FAILED
+}
+
+enum AuditLogResult {
+  SUCCESS
+  FAILURE
+  DENIED
+}
+
+enum AuditLogSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum NotificationCategory {
+  FINANCE
+  BUDGET
+  TRANSACTION
+  RECURRING_TRANSACTION
+  SECURITY
+  PRIVACY
+  SYSTEM
+}
+
+enum NotificationSeverity {
+  INFO
+  SUCCESS
+  WARNING
+  CRITICAL
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+enum BackgroundJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum DataExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  EXPIRED
+  CANCELLED
+}
+
+enum DataExportFormat {
+  CSV
+}
+
+enum DataExportType {
+  TRANSACTIONS
+}
+
+enum DataImportStatus {
+  UPLOADED
+  PARSING
+  AWAITING_CONFIRMATION
+  PROCESSING
+  COMPLETED
+  COMPLETED_WITH_ERRORS
+  FAILED
+  CANCELLED
+}
+
+enum DataImportRowStatus {
+  VALID
+  INVALID
+  DUPLICATE
+  IMPORTED
+  SKIPPED
+  FAILED
+}
+
+enum DataImportFormat {
+  CSV
+  XLSX
+}
+
+enum DataImportType {
+  TRANSACTIONS
+}
+
 model User {
   id           String        @id @default(uuid())
   name         String
   email        String        @unique
   passwordHash String
+  twoFactorEnabled Boolean   @default(false)
+  twoFactorSecret String?
+  twoFactorPendingSecret String?
+  twoFactorEnabledAt DateTime?
+  twoFactorLastVerifiedAt DateTime?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  preferences  UserPreference?
+  authSessions AuthSession[]
+  twoFactorRecoveryCodes TwoFactorRecoveryCode[]
+  twoFactorChallenges TwoFactorChallenge[]
+  loginHistory LoginHistory[]
   wallets      Wallet[]
   categories   Category[]
   transactions Transaction[]
@@ -64,8 +182,102 @@ model User {
   debtPayments DebtPayment[]
   savingGoals  SavingGoal[]
   savingContributions SavingContribution[]
+  recurringTransactions RecurringTransaction[]
+  auditLogs AuditLog[] @relation("AuditLogOwner")
+  actorAuditLogs AuditLog[] @relation("AuditLogActor")
+  notifications Notification[]
+  backgroundJobs BackgroundJob[]
+  dataExports DataExport[]
+  dataImports DataImport[]
 
   @@map("users")
+}
+
+model TwoFactorRecoveryCode {
+  id        String    @id @default(uuid())
+  userId    String
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, usedAt])
+  @@map("two_factor_recovery_codes")
+}
+
+model TwoFactorChallenge {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String
+  attempts  Int       @default(0)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([userId, usedAt])
+  @@map("two_factor_challenges")
+}
+
+model LoginHistory {
+  id                String    @id @default(uuid())
+  userId            String?
+  attemptedEmail    String?
+  status            String
+  method            String
+  failureReason     String?
+  ipAddress         String?
+  userAgent         String?
+  browser           String?
+  operatingSystem   String?
+  deviceType        String?
+  sessionId         String?
+  twoFactorRequired Boolean   @default(false)
+  twoFactorPassed   Boolean   @default(false)
+  recoveryCodeUsed  Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  user              User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([attemptedEmail, createdAt])
+  @@index([status])
+  @@index([method])
+  @@map("login_history")
+}
+
+model UserPreference {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  privacyModeEnabled Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_preferences")
+}
+
+model AuthSession {
+  id              String    @id @default(uuid())
+  userId          String
+  ipAddress       String?
+  userAgent       String?
+  browser         String?
+  operatingSystem String?
+  deviceType      String?
+  deviceName      String?
+  createdAt       DateTime  @default(now())
+  lastActiveAt    DateTime  @default(now())
+  revokedAt       DateTime?
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([userId, lastActiveAt])
+  @@map("auth_sessions")
 }
 
 model Wallet {
@@ -79,6 +291,7 @@ model Wallet {
   updatedAt      DateTime      @updatedAt
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions   Transaction[]
+  recurringTransactions RecurringTransaction[]
 
   @@unique([userId, name])
   @@index([userId])
@@ -97,6 +310,7 @@ model Category {
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
   budgets      Budget[]
+  recurringTransactions RecurringTransaction[]
 
   @@unique([userId, type, name])
   @@index([userId])
@@ -108,6 +322,7 @@ model Transaction {
   userId          String
   walletId        String
   categoryId      String
+  recurringTransactionId String?
   type            TransactionType
   purpose         TransactionPurpose @default(NORMAL)
   amount          Decimal            @db.Decimal(14, 2)
@@ -118,13 +333,282 @@ model Transaction {
   user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   wallet          Wallet             @relation(fields: [walletId], references: [id], onDelete: Restrict)
   category        Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  recurringTransaction RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id], onDelete: SetNull)
   debtPayment     DebtPayment?
   savingContribution SavingContribution?
+  recurringOccurrence RecurringTransactionOccurrence?
 
   @@index([userId, transactionDate])
   @@index([walletId])
   @@index([categoryId])
+  @@index([recurringTransactionId])
   @@map("transactions")
+}
+
+model RecurringTransaction {
+  id                  String                     @id @default(uuid())
+  userId              String
+  walletId            String
+  categoryId          String
+  name                String
+  note                String?
+  type                TransactionType
+  amount              Decimal                    @db.Decimal(14, 2)
+  frequency           RecurringTransactionFrequency
+  interval            Int                        @default(1)
+  startDate           DateTime
+  endDate             DateTime?
+  nextRunDate         DateTime?
+  lastRunDate         DateTime?
+  status              RecurringTransactionStatus @default(ACTIVE)
+  autoGenerate        Boolean                    @default(true)
+  totalGeneratedCount Int                        @default(0)
+  cancelledAt         DateTime?
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+  user                User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet              Wallet                     @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  category            Category                   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  transactions        Transaction[]
+  occurrences         RecurringTransactionOccurrence[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([nextRunDate])
+  @@index([userId, status])
+  @@index([status, nextRunDate])
+  @@index([walletId])
+  @@index([categoryId])
+  @@map("recurring_transactions")
+}
+
+model RecurringTransactionOccurrence {
+  id                     String                               @id @default(uuid())
+  recurringTransactionId String
+  transactionId          String                               @unique
+  scheduledForDate       DateTime
+  generatedAt            DateTime                             @default(now())
+  status                 RecurringTransactionOccurrenceStatus  @default(GENERATED)
+  errorMessage           String?
+  recurringTransaction   RecurringTransaction                 @relation(fields: [recurringTransactionId], references: [id], onDelete: Cascade)
+  transaction            Transaction                          @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+
+  @@unique([recurringTransactionId, scheduledForDate])
+  @@index([recurringTransactionId])
+  @@index([scheduledForDate])
+  @@map("recurring_transaction_occurrences")
+}
+
+model AuditLog {
+  id              String           @id @default(uuid())
+  userId          String?
+  actorUserId     String?
+  action          String
+  entityType      String?
+  entityId        String?
+  result          AuditLogResult   @default(SUCCESS)
+  severity        AuditLogSeverity @default(INFO)
+  ipAddress       String?
+  userAgent       String?
+  browser         String?
+  operatingSystem String?
+  deviceType      String?
+  sessionId       String?
+  requestId       String?
+  correlationId   String?
+  beforeSnapshot  Json?
+  afterSnapshot   Json?
+  metadata        Json?
+  errorMessage    String?
+  createdAt       DateTime         @default(now())
+  user            User?            @relation("AuditLogOwner", fields: [userId], references: [id], onDelete: SetNull)
+  actorUser       User?            @relation("AuditLogActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([result])
+  @@index([severity])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([userId, action])
+  @@index([userId, entityType])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id         String               @id @default(uuid())
+  userId     String
+  type       String
+  category   NotificationCategory
+  severity   NotificationSeverity @default(INFO)
+  title      String
+  message    String
+  status     NotificationStatus   @default(UNREAD)
+  actionUrl  String?
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  dedupeKey  String?
+  readAt     DateTime?
+  archivedAt DateTime?
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dedupeKey])
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@index([userId, status])
+  @@index([userId, category])
+  @@index([userId, type])
+  @@index([userId, severity])
+  @@index([entityType, entityId])
+  @@map("notifications")
+}
+
+model BackgroundJob {
+  id              String              @id @default(uuid())
+  type            String
+  status          BackgroundJobStatus @default(PENDING)
+  priority        Int                 @default(0)
+  queueName       String              @default("default")
+  payload         Json?
+  result          Json?
+  progress        Int                 @default(0)
+  attempts        Int                 @default(0)
+  maxAttempts     Int                 @default(3)
+  errorMessage    String?
+  errorStack      String?
+  runAt           DateTime            @default(now())
+  lockedAt        DateTime?
+  lockedBy        String?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  failedAt        DateTime?
+  cancelledAt     DateTime?
+  createdByUserId String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  createdByUser   User?               @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  dataExports     DataExport[]
+  dataImports     DataImport[]
+
+  @@index([status])
+  @@index([type])
+  @@index([runAt])
+  @@index([status, runAt])
+  @@index([lockedAt])
+  @@index([createdByUserId])
+  @@index([createdAt])
+  @@map("background_jobs")
+}
+
+model DataExport {
+  id            String           @id @default(uuid())
+  userId        String
+  jobId         String?
+  format        DataExportFormat
+  status        DataExportStatus @default(PENDING)
+  exportType    DataExportType
+  filters       Json?
+  fileName      String?
+  storageKey    String?
+  fileSize      Int?
+  mimeType      String?
+  rowCount      Int?
+  errorMessage  String?
+  requestedAt   DateTime         @default(now())
+  startedAt     DateTime?
+  completedAt   DateTime?
+  failedAt      DateTime?
+  expiresAt     DateTime?
+  downloadedAt  DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job           BackgroundJob?    @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([userId, createdAt])
+  @@index([userId, status])
+  @@index([jobId])
+  @@index([expiresAt])
+  @@map("data_exports")
+}
+
+model DataImport {
+  id               String           @id @default(uuid())
+  userId           String
+  jobId            String?
+  importType       DataImportType
+  format           DataImportFormat
+  status           DataImportStatus @default(UPLOADED)
+  originalFileName String
+  storageKey       String?
+  fileSize         Int
+  mimeType         String?
+  totalRows        Int              @default(0)
+  validRows        Int              @default(0)
+  invalidRows      Int              @default(0)
+  importedRows     Int              @default(0)
+  skippedRows      Int              @default(0)
+  duplicateRows    Int              @default(0)
+  failedRows       Int              @default(0)
+  errorMessage     String?
+  mapping          Json?
+  options          Json?
+  summary          Json?
+  requestedAt      DateTime         @default(now())
+  parsedAt         DateTime?
+  confirmedAt      DateTime?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  failedAt         DateTime?
+  cancelledAt      DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job              BackgroundJob?    @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  rows             DataImportRow[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([importType])
+  @@index([userId, createdAt])
+  @@index([userId, status])
+  @@index([jobId])
+  @@map("data_imports")
+}
+
+model DataImportRow {
+  id                   String              @id @default(uuid())
+  importId             String
+  rowNumber            Int
+  rawData              Json
+  normalizedData       Json?
+  validationStatus     DataImportRowStatus
+  validationErrors     Json?
+  duplicateKey         String?
+  matchedWalletId      String?
+  matchedCategoryId    String?
+  createdTransactionId String?
+  skippedReason        String?
+  importedAt           DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  dataImport           DataImport           @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  @@unique([importId, rowNumber])
+  @@index([importId])
+  @@index([validationStatus])
+  @@index([duplicateKey])
+  @@index([createdTransactionId])
+  @@index([importId, validationStatus])
+  @@map("data_import_rows")
 }
 
 model Budget {

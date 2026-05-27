@@ -71,6 +71,41 @@ services:
       retries: 5
       start_period: 15s
 
+  worker:
+    container_name: budgetflow_worker
+    build:
+      context: ./budgetflow-server
+      target: development
+    restart: unless-stopped
+    command: sh -c "CI=true pnpm install --frozen-lockfile --prefer-offline && pnpm container:worker"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://budgetflow:budgetflow_password@postgres:5432/budgetflow?schema=public}
+      DB_WAIT_TIMEOUT_MS: ${DB_WAIT_TIMEOUT_MS:-60000}
+      DB_WAIT_INTERVAL_MS: ${DB_WAIT_INTERVAL_MS:-1000}
+      JWT_SECRET: ${JWT_SECRET:-replace-with-a-long-random-secret}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:3000}
+      NODE_ENV: development
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_TIMEOUT_MS: ${AI_TIMEOUT_MS:-15000}
+      AI_RATE_LIMIT_WINDOW_MS: ${AI_RATE_LIMIT_WINDOW_MS:-60000}
+      AI_RATE_LIMIT_MAX_REQUESTS: ${AI_RATE_LIMIT_MAX_REQUESTS:-10}
+      AI_DAILY_LIMIT_PER_USER: ${AI_DAILY_LIMIT_PER_USER:-50}
+      AUTH_REGISTER_RATE_LIMIT_WINDOW_MS: ${AUTH_REGISTER_RATE_LIMIT_WINDOW_MS:-900000}
+      AUTH_REGISTER_RATE_LIMIT_MAX: ${AUTH_REGISTER_RATE_LIMIT_MAX:-5}
+      AUTH_LOGIN_RATE_LIMIT_WINDOW_MS: ${AUTH_LOGIN_RATE_LIMIT_WINDOW_MS:-900000}
+      AUTH_LOGIN_RATE_LIMIT_MAX: ${AUTH_LOGIN_RATE_LIMIT_MAX:-10}
+      BLOCKED_EMAIL_DOMAINS: ${BLOCKED_EMAIL_DOMAINS:-}
+    volumes:
+      - ./budgetflow-server:/app
+      - server_node_modules:/app/node_modules
+    depends_on:
+      server:
+        condition: service_healthy
+
   client:
     container_name: budgetflow_client
     build:

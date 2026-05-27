@@ -4,6 +4,7 @@ import { FormEvent, KeyboardEvent, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { MessageCircle, Send, Sparkles, X } from "lucide-react";
 
+import { SensitiveText } from "@/components/privacy/sensitive-value";
 import { formatMonthYear, getCurrentMonthYear } from "@/components/shared/month-year-selector";
 import { Button } from "@/components/ui/button";
 import { aiApi } from "@/lib/api/ai.api";
@@ -104,7 +105,7 @@ export function AiChatWidget({ month, periodLabel, year }: AiChatWidgetProps) {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-30 sm:bottom-5 sm:right-5">
+    <div className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] left-4 z-30 sm:bottom-5 sm:left-auto sm:right-5">
       {isOpen ? (
         <div className="flex h-[min(78vh,620px)] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] flex-col rounded-xl border border-border bg-card shadow-2xl sm:h-[620px] sm:max-h-[calc(100vh-2.5rem)] sm:w-[440px]">
           <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
@@ -160,7 +161,7 @@ export function AiChatWidget({ month, periodLabel, year }: AiChatWidgetProps) {
                       message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
                     )}
                   >
-                    {message.content}
+                    {message.role === "assistant" ? <SensitiveText text={message.content} /> : message.content}
                   </div>
                 </div>
               ))

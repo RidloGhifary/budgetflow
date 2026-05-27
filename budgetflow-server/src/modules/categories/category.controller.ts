@@ -1,6 +1,7 @@
 import { asyncHandler } from "../../utils/async-handler";
 import { getAuthenticatedUserId } from "../../utils/auth-context";
 import { sendSuccess } from "../../utils/api-response";
+import { getAuditRequestContext } from "../audit-logs/audit-log.context";
 import {
   createUserCategory,
   deleteUserCategory,
@@ -22,7 +23,7 @@ export const getCategories = asyncHandler(async (req, res) => {
 
 export const createCategory = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  const category = await createUserCategory(userId, req.body as CreateCategoryInput);
+  const category = await createUserCategory(userId, req.body as CreateCategoryInput, getAuditRequestContext(req));
 
   return sendSuccess(res, {
     statusCode: 201,
@@ -43,7 +44,7 @@ export const getCategory = asyncHandler(async (req, res) => {
 
 export const updateCategory = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  const category = await updateUserCategory(userId, req.params.id, req.body as UpdateCategoryInput);
+  const category = await updateUserCategory(userId, req.params.id, req.body as UpdateCategoryInput, getAuditRequestContext(req));
 
   return sendSuccess(res, {
     message: "Category updated",
@@ -53,7 +54,7 @@ export const updateCategory = asyncHandler(async (req, res) => {
 
 export const deleteCategory = asyncHandler(async (req, res) => {
   const userId = getAuthenticatedUserId(req);
-  await deleteUserCategory(userId, req.params.id);
+  await deleteUserCategory(userId, req.params.id, getAuditRequestContext(req));
 
   return sendSuccess(res, {
     message: "Category deleted",

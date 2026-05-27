@@ -1,8 +1,10 @@
 import { z } from "zod";
 
+import { positiveNumberInput } from "@/lib/validation/numbers";
+
 export const savingGoalStatusValues = ["IN_PROGRESS", "COMPLETED", "CANCELLED"] as const;
 
-const amountSchema = z.coerce.number().finite("Amount must be a valid number.").positive("Amount must be greater than zero.");
+const amountSchema = positiveNumberInput("Amount");
 const dateInputSchema = z
   .string()
   .optional()

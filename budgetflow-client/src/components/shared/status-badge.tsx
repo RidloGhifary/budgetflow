@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import type { BudgetStatus, DebtStatus, GoalStatus } from "@/types/finance";
 
-type KnownStatus = BudgetStatus | DebtStatus | GoalStatus | "INCOME" | "EXPENSE";
+type KnownStatus = BudgetStatus | DebtStatus | GoalStatus | "ACTIVE" | "PAUSED" | "INCOME" | "EXPENSE";
 
 const statusMap: Record<KnownStatus, { label: string; variant: "default" | "success" | "warning" | "danger" | "muted" }> = {
   SAFE: { label: "Safe", variant: "success" },
@@ -11,6 +11,8 @@ const statusMap: Record<KnownStatus, { label: string; variant: "default" | "succ
   PARTIAL: { label: "Partial", variant: "warning" },
   PAID: { label: "Paid", variant: "success" },
   IN_PROGRESS: { label: "In progress", variant: "default" },
+  ACTIVE: { label: "Active", variant: "success" },
+  PAUSED: { label: "Paused", variant: "warning" },
   COMPLETED: { label: "Completed", variant: "success" },
   CANCELLED: { label: "Cancelled", variant: "muted" },
   INCOME: { label: "Income", variant: "success" },

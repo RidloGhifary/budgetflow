@@ -32,7 +32,21 @@ export const loginRateLimiter = createAuthRateLimiter({
   windowMs: env.auth.loginRateLimitWindowMs
 });
 
-function createAuthRateLimiter(options: RateLimitOptions) {
+export const twoFactorRateLimiter = createAuthRateLimiter({
+  keyPrefix: "auth-2fa",
+  keyGenerator: (req) => `${getClientIp(req)}:${getChallengeId(req)}`,
+  maxRequests: 8,
+  windowMs: 10 * 60 * 1000
+});
+
+export const securityConfirmationRateLimiter = createAuthRateLimiter({
+  keyPrefix: "security-confirm",
+  keyGenerator: (req) => `${getClientIp(req)}:${req.auth?.userId ?? "anonymous"}`,
+  maxRequests: 8,
+  windowMs: 10 * 60 * 1000
+});
+
+export function createAuthRateLimiter(options: RateLimitOptions) {
   return (req: Request, _res: Response, next: NextFunction) => {
     const now = Date.now();
     const key = `${options.keyPrefix}:${options.keyGenerator?.(req) ?? getClientIp(req)}`;
@@ -63,4 +77,8 @@ function getRequestEmail(req: Request) {
   const email = typeof req.body?.email === "string" ? normalizeEmail(req.body.email) : "";
 
   return email || "unknown-email";
+}
+
+function getChallengeId(req: Request) {
+  return typeof req.body?.challengeId === "string" ? req.body.challengeId : "unknown-challenge";
 }

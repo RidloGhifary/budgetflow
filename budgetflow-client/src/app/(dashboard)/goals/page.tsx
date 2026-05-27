@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CircleGauge,
@@ -18,6 +18,7 @@ import {
 import { GoalContributionForm } from "@/components/goals/goal-contribution-form";
 import { GoalFilters } from "@/components/goals/goal-filters";
 import { GoalForm } from "@/components/goals/goal-form";
+import { SensitiveText, SensitiveValue } from "@/components/privacy/sensitive-value";
 import { PaginationControls, useClientPagination } from "@/components/shared/pagination";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProgressIndicator } from "@/components/shared/progress-indicator";
@@ -252,21 +253,21 @@ export default function SavingGoalsPage() {
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatTile
           label="Total Target"
-          value={formatCurrency(summary?.totalTargetAmount ?? 0)}
+          value={<SensitiveValue format="currency" value={summary?.totalTargetAmount ?? 0} />}
           helper={`${summary?.completedGoalsCount ?? 0} completed goals`}
           icon={Target}
           tone="primary"
         />
         <StatTile
           label="Total Saved"
-          value={formatCurrency(summary?.totalSavedAmount ?? 0)}
-          helper={`${formatPercent(summary?.averageProgressPercentage ?? 0)} average progress`}
+          value={<SensitiveValue format="currency" value={summary?.totalSavedAmount ?? 0} />}
+          helper={<SensitiveText text={`${formatPercent(summary?.averageProgressPercentage ?? 0)} average progress`} />}
           icon={PiggyBank}
           tone="success"
         />
         <StatTile
           label="Total Remaining"
-          value={formatCurrency(summary?.totalRemainingAmount ?? 0)}
+          value={<SensitiveValue format="currency" value={summary?.totalRemainingAmount ?? 0} />}
           helper={`${summary?.cancelledGoalsCount ?? 0} cancelled goals`}
           icon={WalletCards}
           tone="blue"
@@ -297,8 +298,11 @@ export default function SavingGoalsPage() {
       {contributionGoal ? (
         <SectionCard
           title="Add Saving Contribution"
-          description={`${formatCurrency(contributionGoal.remainingAmount)} remaining for ${contributionGoal.name}.`}
+          description=""
         >
+          <p className="mb-4 text-sm text-muted-foreground">
+            <SensitiveValue format="currency" value={contributionGoal.remainingAmount} /> remaining for {contributionGoal.name}.
+          </p>
           <div className="space-y-4">
             {contributionError ? (
               <div className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">{contributionError}</div>
@@ -474,16 +478,16 @@ function SavingGoalCard({
       </div>
 
       <div className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
-        <GoalAmount label="Target" value={formatCurrency(goal.targetAmount)} />
-        <GoalAmount label="Saved" value={formatCurrency(goal.currentAmount)} tone={isCompleted ? "success" : "default"} />
-        <GoalAmount label="Remaining" value={formatCurrency(goal.remainingAmount)} tone={goal.remainingAmount <= 0 ? "success" : "default"} />
+        <GoalAmount label="Target" value={<SensitiveValue format="currency" value={goal.targetAmount} />} />
+        <GoalAmount label="Saved" value={<SensitiveValue format="currency" value={goal.currentAmount} />} tone={isCompleted ? "success" : "default"} />
+        <GoalAmount label="Remaining" value={<SensitiveValue format="currency" value={goal.remainingAmount} />} tone={goal.remainingAmount <= 0 ? "success" : "default"} />
       </div>
 
       <div className="mt-5">
         <ProgressIndicator
           value={progress}
           tone={tone}
-          label={`${formatPercent(goal.progressPercentage)} funded toward ${formatCurrency(goal.targetAmount)}`}
+          label={<SensitiveText text={`${formatPercent(goal.progressPercentage)} funded toward ${formatCurrency(goal.targetAmount)}`} />}
         />
       </div>
 
@@ -517,7 +521,7 @@ function SavingGoalCard({
   );
 }
 
-function GoalAmount({ label, tone = "default", value }: { label: string; tone?: "default" | "success"; value: string }) {
+function GoalAmount({ label, tone = "default", value }: { label: string; tone?: "default" | "success"; value: ReactNode }) {
   return (
     <div className="rounded-md bg-muted/40 p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
@@ -571,7 +575,9 @@ function ContributionHistory({
       {contributions.map((contribution) => (
         <div key={contribution.id} className="flex items-center justify-between gap-3 py-3">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground">{formatCurrency(contribution.amount)}</p>
+            <p className="text-sm font-medium text-foreground">
+              <SensitiveValue format="currency" value={contribution.amount} />
+            </p>
             <p className="truncate text-xs text-muted-foreground">
               {formatDate(contribution.contributionDate)} - {contribution.transaction.wallet.name} - {contribution.transaction.category.name}
             </p>

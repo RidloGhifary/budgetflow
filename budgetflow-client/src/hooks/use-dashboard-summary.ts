@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { dashboardApi, type DashboardSummaryFilters } from "@/lib/api/dashboard.api";
 import { getFriendlyApiError } from "@/lib/api/http";
+import { subscribeToTransactionsChanged } from "@/lib/events";
 import type { DashboardSummary } from "@/types/api";
 
 export function useDashboardSummary(filters: DashboardSummaryFilters) {
@@ -30,6 +31,8 @@ export function useDashboardSummary(filters: DashboardSummaryFilters) {
   useEffect(() => {
     void loadSummary();
   }, [loadSummary]);
+
+  useEffect(() => subscribeToTransactionsChanged(() => void loadSummary()), [loadSummary]);
 
   return {
     summary,

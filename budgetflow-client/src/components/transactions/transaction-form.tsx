@@ -5,6 +5,7 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 
+import { AmountInput } from "@/components/ui/amount-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { transactionPurposeLabels, transactionTypeLabels } from "@/lib/labels";
@@ -15,6 +16,7 @@ import {
   transactionTypeValues,
   type TransactionFormValues
 } from "@/lib/validation/transactions";
+import { usePreferences } from "@/providers/preferences-provider";
 import type { Category, Transaction, TransactionPurpose, TransactionType, Wallet } from "@/types/api";
 
 interface TransactionFormProps {
@@ -74,6 +76,7 @@ export function TransactionForm({
   walletError,
   wallets
 }: TransactionFormProps) {
+  const { privacyModeEnabled } = usePreferences();
   const {
     formState: { errors },
     handleSubmit,
@@ -88,7 +91,7 @@ export function TransactionForm({
       categoryId: transaction?.categoryId ?? "",
       type: transaction?.type ?? "EXPENSE",
       purpose: transaction?.purpose ?? "NORMAL",
-      amount: transaction?.amount ?? 0,
+      amount: transaction?.amount,
       transactionDate: getTransactionDateInputValue(transaction?.transactionDate),
       note: transaction?.note ?? ""
     }
@@ -109,7 +112,7 @@ export function TransactionForm({
       categoryId: transaction?.categoryId ?? "",
       type: transaction?.type ?? "EXPENSE",
       purpose: transaction?.purpose ?? "NORMAL",
-      amount: transaction?.amount ?? 0,
+      amount: transaction?.amount,
       transactionDate: getTransactionDateInputValue(transaction?.transactionDate),
       note: transaction?.note ?? ""
     });
@@ -171,13 +174,9 @@ export function TransactionForm({
 
         <label className="block space-y-2">
           <span className="text-sm font-medium text-foreground">Amount</span>
-          <Input
+          <AmountInput
             aria-invalid={Boolean(errors.amount)}
-            inputMode="numeric"
-            min="0"
             placeholder="75000"
-            step="1000"
-            type="number"
             {...register("amount")}
           />
           {errors.amount ? <p className="text-xs text-red-600">{errors.amount.message}</p> : null}
@@ -189,7 +188,7 @@ export function TransactionForm({
             <option value="">{isWalletsLoading ? "Loading wallets..." : "Select wallet"}</option>
             {wallets.map((wallet) => (
               <option key={wallet.id} value={wallet.id}>
-                {wallet.name} - {formatCurrency(wallet.currentBalance)}
+                {wallet.name} - {privacyModeEnabled ? "Rp *****" : formatCurrency(wallet.currentBalance)}
               </option>
             ))}
           </select>
@@ -233,7 +232,7 @@ export function TransactionForm({
           message={
             <>
               Create a wallet before adding transactions.{" "}
-              <Link className="font-semibold text-primary hover:text-[#005F4F]" href="/wallets">
+              <Link className="font-semibold text-primary hover:text-primary/80" href="/wallets">
                 Go to wallets
               </Link>
             </>
@@ -245,7 +244,7 @@ export function TransactionForm({
           message={
             <>
               Create a {transactionTypeLabels[selectedType].toLowerCase()} category before adding this transaction.{" "}
-              <Link className="font-semibold text-primary hover:text-[#005F4F]" href="/categories">
+              <Link className="font-semibold text-primary hover:text-primary/80" href="/categories">
                 Go to categories
               </Link>
             </>

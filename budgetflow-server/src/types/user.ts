@@ -3,6 +3,11 @@ export interface DbUser {
   name: string;
   email: string;
   passwordHash: string;
+  twoFactorEnabled: boolean;
+  twoFactorSecret: string | null;
+  twoFactorPendingSecret: string | null;
+  twoFactorEnabledAt: Date | null;
+  twoFactorLastVerifiedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
